@@ -5,6 +5,12 @@
 .env.production
 .env.development
 
+# Virtual environments
+.venv/
+venv/
+env/
+
+
 # Python
 __pycache__/
 *.py[cod]
@@ -28,3 +34,10 @@ Thumbs.db
 # Git
 .git/
 .gitignore
+
+# GitHub Actions
+.github
+
+# Docker
+Dockerfile
+docker-compose.yml
