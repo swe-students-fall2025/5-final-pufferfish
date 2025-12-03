@@ -1,5 +1,11 @@
 FROM python:3.11-slim
 
+# Install ca-certificates for SSL
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY requirements.txt .
