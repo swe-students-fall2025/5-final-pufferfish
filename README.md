@@ -12,7 +12,7 @@ An exercise to put to practice software development teamwork, subsystem communic
 
 ## Setup and Installation
 
-### Local Development Setup
+### Back-End Setup
 
 1. Navigate to the back-end directory:
 
@@ -45,6 +45,28 @@ An exercise to put to practice software development teamwork, subsystem communic
    ```
 
    The application will be available at `http://localhost:8000`
+
+### Front-End Setup
+
+1. Navigate to the front-end directory:
+
+   ```bash
+   cd front-end
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Run the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+   The application will be available at `http://localhost:5173`
 
 ## Deployment
 
