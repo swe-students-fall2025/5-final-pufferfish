@@ -33,5 +33,12 @@ jobs:
                     context: .
                     push: true
                     tags: |
-                        xl4624/pufferfish-frontend:latest
-                        xl4624/pufferfish-frontend:${{ github.sha }}
+                        xl4624/pufferfish:latest
+                        xl4624/pufferfish:${{ github.sha }}
+
+            -
+                name: Deploy to Digital Ocean
+                uses: digitalocean/app_action/deploy@v2
+                with:
+                    token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+                    app_name: xl-4624-pufferfish 
