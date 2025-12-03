@@ -8,7 +8,7 @@ on:
 
 
 jobs:
-    build-and-test:
+    build-and-deploy:
         runs-on: ubuntu-latest
         if: github.event.workflow_run.conclusion == 'success'
         steps:
@@ -41,4 +41,4 @@ jobs:
                 uses: digitalocean/app_action/deploy@v2
                 with:
                     token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-                    app_name: xl-4624-pufferfish 
+                    app_name: xl-4624-pufferfish

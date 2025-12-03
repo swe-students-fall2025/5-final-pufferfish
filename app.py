@@ -37,7 +37,7 @@ def health():
         return jsonify({"status": "ok", "DB": str(db.list_collection_names())}), 200
 
     except PyMongoError as e:
-        return jsonify({"status": "error", "detail": str(e)}, 500)
+        return jsonify({"status": "error", "detail": str(e)}), 500
 
 
 if __name__ == "__main__":
