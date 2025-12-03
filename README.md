@@ -14,12 +14,12 @@ An exercise to put to practice software development teamwork, subsystem communic
 
 Deployment link: https://pufferfish-36n2u.ondigitalocean.app/ 
 
-### Back-End Setup
+### Setup
 
-1. Navigate to the back-end directory:
+1. Navigate to the project root directory:
 
    ```bash
-   cd back-end
+   cd /path/to/5-final-pufferfish
    ```
 
 2. Create a virtual environment:
@@ -48,27 +48,15 @@ Deployment link: https://pufferfish-36n2u.ondigitalocean.app/
 
    The application will be available at `http://localhost:8000`
 
-### Front-End Setup
+### Docker Setup
 
-1. Navigate to the front-end directory:
+To run the application using Docker Compose:
 
-   ```bash
-   cd front-end
-   ```
+```bash
+docker-compose up
+```
 
-2. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-3. Run the development server:
-
-   ```bash
-   npm run dev
-   ```
-
-   The application will be available at `http://localhost:5173`
+The application will be available at `http://localhost:8000`
 
 ## Deployment
 

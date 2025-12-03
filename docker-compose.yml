@@ -1,26 +1,15 @@
 services:
-  backend:
+  app:
     build:
-      context: ./back-end
+      context: .
       dockerfile: Dockerfile
-    container_name: backend
+    container_name: app
     ports:
       - "8000:8000"
     env_file:
-      - ./back-end/.env
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./front-end
-      dockerfile: Dockerfile
-    container_name: frontend
-    ports:
-      - "3000:80"
-    volumes:
-      - ./front-end/nginx.conf:/etc/nginx/conf.d/default.conf
+      - .env
     depends_on:
-      - backend
+      - mongodb
     restart: unless-stopped
 
   mongodb:
