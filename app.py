@@ -10,9 +10,10 @@ mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/mydb")
 client = MongoClient(mongo_uri)
 db = client.get_database()
 
+
 @app.route("/")
 def index():
-    return "Hello, World!"
+    return "Hello, \!"
 
 
 @app.route("/health")
@@ -33,13 +34,11 @@ def health():
         if not doc:
             raise RuntimeError("healthcheck document missing after write")
 
-        return jsonify({
-            "status": "ok",
-            "DB": str(db.list_collection_names())
-        }), 200
-    
+        return jsonify({"status": "ok", "DB": str(db.list_collection_names())}), 200
+
     except PyMongoError as e:
         return jsonify({"status": "error", "detail": str(e)}, 500)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
