@@ -1,10 +1,11 @@
 name: Web App CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+    paths:
+        - 'app/**'
+        - '.github/workflows/webapp-ci.yml'
 
 jobs:
   build-and-test:
