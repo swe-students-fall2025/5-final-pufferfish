@@ -9,6 +9,18 @@ services:
     env_file:
       - ./back-end/.env
     restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python - <<'PY'\nimport urllib.request,sys; urllib.request.urlopen('http://localhost:8000/').read(); print('ok')\nPY",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    volumes:
+      - ./back-end:/app
 
   frontend:
     build:
