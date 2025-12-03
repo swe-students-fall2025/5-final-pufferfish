@@ -1,7 +1,7 @@
 services:
   app:
     build:
-      context: .
+      context: app/
       dockerfile: Dockerfile
     container_name: app
     ports:
@@ -15,7 +15,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "python - <<'PY'\nimport urllib.request,sys; urllib.request.urlopen('http://localhost:8000/').read(); print('ok')\nPY",
+          "python - <<'PY'\nimport urllib.request,sys; urllib.request.urlopen('http://localhost:8000/health').read(); print('ok')\nPY",
         ]
       interval: 10s
       timeout: 5s

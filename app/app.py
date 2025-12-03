@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
@@ -13,7 +13,7 @@ db = client.get_database()
 
 @app.route("/")
 def index():
-    return "Hello, \!"
+    return render_template("index.html")
 
 
 @app.route("/health")

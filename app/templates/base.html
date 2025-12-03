@@ -1,0 +1,38 @@
+<!-- templates/base.html -->
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Pufferfish{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+
+<body>
+
+    <!-- optional top bar; keep it minimal so it doesn't fight your designs -->
+    <header>
+        <!-- leave empty on purpose; your child templates render their own menus/links -->
+    </header>
+
+    <!-- flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul id="flashes">
+        {% for cat, msg in messages %}
+        <li class="flash {{ cat|e }}">{{ msg }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+
+    <!-- page-specific content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer></footer>
+</body>
+
+</html>
