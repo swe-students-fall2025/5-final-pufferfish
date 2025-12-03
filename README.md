@@ -12,6 +12,8 @@ An exercise to put to practice software development teamwork, subsystem communic
 
 ## Setup and Installation
 
+Deployment link: https://pufferfish-36n2u.ondigitalocean.app/ 
+
 ### Back-End Setup
 
 1. Navigate to the back-end directory:
