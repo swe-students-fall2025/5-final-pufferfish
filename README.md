@@ -1,5 +1,8 @@
 # Final Project
 
+[![CI](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/webapp-ci.yml/badge.svg)](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/webapp-ci.yml)
+[![CD](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/docker-cicd.yml/badge.svg)](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/docker-cicd.yml)
+
 An exercise to put to practice software development teamwork, subsystem communication, containers, deployment, and CI/CD pipelines. See [instructions](./instructions.md) for details.
 
 ## Class Members
