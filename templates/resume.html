@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Resume - PDF Viewer</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="/static/css/resume.css" />
+  </head>
+  <body>
+    <div id="content-wrapper">
+      <div id="viewer"></div>
+    </div>
+
+    <!-- Popup form for highlight confirmation -->
+    <div id="highlight-popup">
+      <h3>Save Highlight?</h3>
+      <div class="selected-text" id="popup-selected-text"></div>
+      <div class="button-group">
+        <button class="cancel" id="popup-cancel-btn">Cancel</button>
+        <button class="save" id="popup-save-btn">Save</button>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="/static/js/resume.js"></script>
+  </body>
+</html>
