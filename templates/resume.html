@@ -11,14 +11,24 @@
     <link rel="stylesheet" type="text/css" href="/static/css/resume.css" />
   </head>
   <body>
-    <div id="content-wrapper">
-      <div id="viewer"></div>
+    <div id="main-container">
+      <div id="content-wrapper">
+        <div id="viewer"></div>
+      </div>
+      <div id="comments-sidebar">
+        <h3>Comments</h3>
+        <div id="comments-list"></div>
+      </div>
     </div>
 
     <!-- Popup form for highlight confirmation -->
     <div id="highlight-popup">
       <h3>Save Highlight?</h3>
       <div class="selected-text" id="popup-selected-text"></div>
+      <div class="comment-input-group">
+        <label for="popup-comment-input">Add a comment:</label>
+        <textarea id="popup-comment-input" placeholder="Enter your comment here..." required></textarea>
+      </div>
       <div class="button-group">
         <button class="cancel" id="popup-cancel-btn">Cancel</button>
         <button class="save" id="popup-save-btn">Save</button>
