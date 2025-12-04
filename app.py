@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template, send_from_directory
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
@@ -37,7 +37,12 @@ def health():
         return jsonify({"status": "ok", "DB": str(db.list_collection_names())}), 200
 
     except PyMongoError as e:
-        return jsonify({"status": "error", "detail": str(e)}, 500)
+        return jsonify({"status": "error", "detail": str(e)}), 500
+
+
+@app.route("/resume")
+def resume():
+    return render_template("resume.html")
 
 
 if __name__ == "__main__":
