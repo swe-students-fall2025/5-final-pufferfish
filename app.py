@@ -13,7 +13,7 @@ db = client.get_database()
 
 @app.route("/")
 def index():
-    return "Hello!"
+    return "Hello!", 200
 
 
 @app.route("/health")
