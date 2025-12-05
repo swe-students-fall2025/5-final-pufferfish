@@ -5,13 +5,40 @@ body {
   padding: 0;
 }
 
+#main-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
 #content-wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  flex: 1;
   overflow: auto;
+  position: relative;
+}
+
+#comments-sidebar {
+  width: 350px;
+  background: white;
+  border-left: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#comments-sidebar h3 {
+  margin: 0;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+#comments-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
 }
 
 .page-container {
@@ -25,27 +52,30 @@ body {
   position: relative;
 }
 
-.text-layer {
+.textLayer {
   position: absolute;
+  text-align: initial;
   left: 0;
   top: 0;
   right: 0;
   bottom: 0;
   overflow: hidden;
   opacity: 0.2;
-  line-height: 1;
+  line-height: 1.0;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 1;
+  letter-spacing: normal;
+  word-spacing: normal;
 }
 
-.text-layer span {
+.textLayer span {
   color: transparent;
   position: absolute;
   white-space: pre;
   cursor: text;
   transform-origin: 0% 0%;
-}
-
-.text-layer ::selection {
-  background: rgba(0, 0, 255, 0.3);
 }
 
 .highlight-layer {
@@ -112,6 +142,44 @@ canvas {
   color: #333;
 }
 
+#highlight-popup .comment-input-group {
+  margin-bottom: 15px;
+}
+
+#highlight-popup .comment-input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+#highlight-popup .comment-input-group label .required {
+  color: #d32f2f;
+}
+
+#highlight-popup .comment-input-group textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: sans-serif;
+  resize: vertical;
+}
+
+#highlight-popup .comment-input-group textarea:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+}
+
+#highlight-popup .comment-input-group textarea.error {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
+}
+
 #highlight-popup .button-group {
   display: flex;
   gap: 10px;
@@ -133,8 +201,79 @@ canvas {
   color: white;
 }
 
-#highlight-popup button.save:hover {
+#highlight-popup button.save:hover:not(.disabled) {
   background-color: #357abd;
+}
+
+#highlight-popup button.save.disabled {
+  background-color: #ccc;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* Comment item styles */
+.comment-item {
+  padding: 15px;
+  margin-bottom: 15px;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  border-left: 4px solid #4a90e2;
+}
+
+.comment-item .comment-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.comment-item .comment-highlight {
+  font-size: 12px;
+  color: #666;
+  background: #f0f0f0;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-style: italic;
+  max-height: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comment-item .comment-meta {
+  font-size: 12px;
+  color: #999;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.comment-item .comment-delete {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.comment-item .comment-delete:hover {
+  background-color: #e0e0e0;
+  color: #d32f2f;
+}
+
+#comments-list:empty::before {
+  content: "No comments yet. Highlight text to add a comment.";
+  display: block;
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-style: italic;
 }
 
 #highlight-popup button.cancel {
