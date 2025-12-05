@@ -1,12 +1,16 @@
 """Basic tests for the Flask application."""
 import pytest
-from app import app
+import mongomock
+from app import create_app
 
 
 @pytest.fixture
 def client():
     """Create a test client for the Flask app."""
+    app = create_app()
     app.config['TESTING'] = True
+    app.config['MONGO_URI'] = 'mongomock://localhost'
+    
     with app.test_client() as client:
         yield client
 
