@@ -8,7 +8,7 @@
       type="text/css"
       href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css"
     />
-    <link rel="stylesheet" type="text/css" href="/static/css/resume.css" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/resume.css') }}" />
   </head>
   <body>
     <div id="main-container">
@@ -36,6 +36,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="/static/js/resume.js"></script>
+    <script src="{{ url_for('static', filename='js/resume.js') }}"></script>
   </body>
 </html>
