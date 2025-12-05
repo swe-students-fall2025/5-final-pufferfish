@@ -52,27 +52,30 @@ body {
   position: relative;
 }
 
-.text-layer {
+.textLayer {
   position: absolute;
+  text-align: initial;
   left: 0;
   top: 0;
   right: 0;
   bottom: 0;
   overflow: hidden;
   opacity: 0.2;
-  line-height: 1;
+  line-height: 1.0;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 1;
+  letter-spacing: normal;
+  word-spacing: normal;
 }
 
-.text-layer span {
+.textLayer span {
   color: transparent;
   position: absolute;
   white-space: pre;
   cursor: text;
   transform-origin: 0% 0%;
-}
-
-.text-layer ::selection {
-  background: rgba(0, 0, 255, 0.3);
 }
 
 .highlight-layer {

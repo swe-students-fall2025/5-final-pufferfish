@@ -375,7 +375,10 @@ async function renderPage(pageNum, pdfPage, container) {
 
     // Text layer: transparent overlay for text selection (positioned above canvas)
     const textLayer = document.createElement('div');
-    textLayer.className = 'text-layer';
+    textLayer.className = 'textLayer';
+    textLayer.style.width = viewport.width + 'px';
+    textLayer.style.height = viewport.height + 'px';
+    textLayer.style.setProperty('--scale-factor', scale);
 
     // Highlight layer: displays saved and temporary highlights (positioned above text layer)
     const highlightLayer = document.createElement('div');
@@ -398,10 +401,10 @@ async function renderPage(pageNum, pdfPage, container) {
     // Render text layer for selection
     // Creates invisible text spans positioned over the canvas that enable native browser text
     // selection. enhanceTextSelection improves accuracy for complex layouts.
-    const textContent = await pdfPage.getTextContent();
+    const textContentSource = await pdfPage.getTextContent();
     const textDivs = [];
     const textLayerRenderTask = pdfjsLib.renderTextLayer({
-        textContent: textContent,
+        textContentSource: textContentSource,
         container: textLayer,
         viewport: viewport,
         textDivs: textDivs,
