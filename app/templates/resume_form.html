@@ -183,16 +183,22 @@
                     </div>
                 </div>
                 <div class="bullets-container" data-entry-index="0">
-                    <div class="form-row">
+                    <div class="form-row" data-bullet-index="0">
                         <div class="form-group full-width">
                             <label>Bullet point:</label>
                             <input type="text" name="experience_0_bullet_0" placeholder="Describe your responsibilities and achievements...">
                         </div>
+                        <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
+                            <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, 0, 'experience')">Delete</button>
+                        </div>
                     </div>
-                    <div class="form-row">
+                    <div class="form-row" data-bullet-index="1">
                         <div class="form-group full-width">
                             <label>Bullet point:</label>
                             <input type="text" name="experience_0_bullet_1" placeholder="Describe your responsibilities and achievements...">
+                        </div>
+                        <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
+                            <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, 0, 'experience')">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -234,16 +240,22 @@
                     </div>
                 </div>
                 <div class="bullets-container" data-entry-index="0">
-                    <div class="form-row">
+                    <div class="form-row" data-bullet-index="0">
                         <div class="form-group full-width">
                             <label>Bullet point:</label>
                             <input type="text" name="project_0_bullet_0" placeholder="Describe the project...">
                         </div>
+                        <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
+                            <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, 0, 'project')">Delete</button>
+                        </div>
                     </div>
-                    <div class="form-row">
+                    <div class="form-row" data-bullet-index="1">
                         <div class="form-group full-width">
                             <label>Bullet point:</label>
                             <input type="text" name="project_0_bullet_1" placeholder="Describe the project...">
+                        </div>
+                        <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
+                            <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, 0, 'project')">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -417,16 +429,22 @@ document
             </div>
         </div>
         <div class="bullets-container" data-entry-index="${newIndex}">
-            <div class="form-row">
+            <div class="form-row" data-bullet-index="0">
                 <div class="form-group full-width">
                     <label>Bullet point:</label>
                     <input type="text" name="experience_${newIndex}_bullet_0" placeholder="Describe your responsibilities and achievements...">
                 </div>
+                <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
+                    <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, ${newIndex}, 'experience')">Delete</button>
+                </div>
             </div>
-            <div class="form-row">
+            <div class="form-row" data-bullet-index="1">
                 <div class="form-group full-width">
                     <label>Bullet point:</label>
                     <input type="text" name="experience_${newIndex}_bullet_1" placeholder="Describe your responsibilities and achievements...">
+                </div>
+                <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
+                    <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, ${newIndex}, 'experience')">Delete</button>
                 </div>
             </div>
         </div>
@@ -490,16 +508,22 @@ document.getElementById("addProject")?.addEventListener("click", function () {
             </div>
         </div>
         <div class="bullets-container" data-entry-index="${newIndex}">
-            <div class="form-row">
+            <div class="form-row" data-bullet-index="0">
                 <div class="form-group full-width">
                     <label>Bullet point:</label>
                     <input type="text" name="project_${newIndex}_bullet_0" placeholder="Describe the project...">
                 </div>
+                <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
+                    <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, ${newIndex}, 'project')">Delete</button>
+                </div>
             </div>
-            <div class="form-row">
+            <div class="form-row" data-bullet-index="1">
                 <div class="form-group full-width">
                     <label>Bullet point:</label>
                     <input type="text" name="project_${newIndex}_bullet_1" placeholder="Describe the project...">
+                </div>
+                <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
+                    <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, ${newIndex}, 'project')">Delete</button>
                 </div>
             </div>
         </div>
@@ -514,7 +538,13 @@ document.getElementById("addProject")?.addEventListener("click", function () {
 
 // Add Bullet Point
 function addBulletPoint(entryIndex, type) {
-  const container = document.querySelector(
+  // Find the specific container by looking for the parent entry first, then the bullets container
+  const parentEntry = document.querySelector(
+    `.${type}-entry[data-index="${entryIndex}"]`
+  );
+  if (!parentEntry) return;
+  
+  const container = parentEntry.querySelector(
     `.bullets-container[data-entry-index="${entryIndex}"]`
   );
   if (!container) return;
@@ -535,9 +565,20 @@ function addBulletPoint(entryIndex, type) {
             <label>Bullet point:</label>
             <input type="text" name="${type}_${entryIndex}_bullet_${bulletIndex}" placeholder="${placeholder}">
         </div>
+        <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
+            <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, ${entryIndex}, '${type}')">Delete</button>
+        </div>
     `;
 
   container.appendChild(newBullet);
+}
+
+// Remove Bullet Point
+function removeBulletPoint(button, entryIndex, type) {
+  const bulletRow = button.closest(".form-row");
+  if (bulletRow) {
+    bulletRow.remove();
+  }
 }
 
 // Remove Entry

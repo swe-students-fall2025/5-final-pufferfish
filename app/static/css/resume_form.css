@@ -183,6 +183,20 @@ main {
     width: 100%;
 }
 
+/* Delete button styling for bullet points */
+.bullets-container .form-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.bullets-container .form-row .form-group:last-child {
+    flex: 0 0 auto;
+    align-self: flex-end;
+    padding-top: 1.5rem;
+    margin-bottom: 0;
+}
+
 /* Entry Sections */
 .education-entry,
 .experience-entry,
