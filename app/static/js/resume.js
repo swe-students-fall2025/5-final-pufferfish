@@ -4,6 +4,9 @@ const documentId = config.documentId;
 pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
+// CONSTANTS
+const PDF_SCALE = 1.5; // Scale factor for PDF rendering
+
 let pdfDocument = null;
 let highlights = {};
 let currentTemporaryHighlight = null; // Preview highlight shown before user confirms save/cancel
@@ -26,20 +29,22 @@ async function loadHighlights() {
 }
 
 async function saveHighlights() {
-    try {
-        await fetch("/api/highlights", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                documentId: documentId,
-                highlights: highlights,
-            }),
-        });
-    } catch (e) {
-        console.warn("Failed to save highlights:", e);
+    const response = await fetch("/api/highlights", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            documentId: documentId,
+            highlights: highlights,
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to save highlights: ${response.status} ${response.statusText}`);
     }
+
+    return await response.json();
 }
 
 function generateHighlightId() {
@@ -238,7 +243,7 @@ function showHighlightPopup(selectedText, pageNum, viewport, highlightLayer) {
     // Validate on input
     commentInput.addEventListener("input", updateSaveButtonState);
 
-    const saveHandler = () => {
+    const saveHandler = async () => {
         const commentValue = commentInput.value.trim();
         if (commentValue.length === 0) {
             commentInput.focus();
@@ -249,8 +254,20 @@ function showHighlightPopup(selectedText, pageNum, viewport, highlightLayer) {
         if (currentTemporaryHighlight) {
             currentTemporaryHighlight.comment = commentValue;
         }
-        saveHighlight(pageNum, viewport, highlightLayer);
-        hideHighlightPopup();
+
+        newSaveBtn.disabled = true;
+        newSaveBtn.classList.add("disabled");
+        newSaveBtn.textContent = "Saving...";
+
+        try {
+            await saveHighlight(pageNum, viewport, highlightLayer);
+            hideHighlightPopup();
+        } catch (err) {
+            // Error already handled in saveHighlight, just reset button state
+            newSaveBtn.disabled = false;
+            newSaveBtn.classList.remove("disabled");
+            newSaveBtn.textContent = "Save";
+        }
     };
 
     newSaveBtn.addEventListener("click", saveHandler);
@@ -301,14 +318,15 @@ function hideHighlightPopup() {
     commentInput.classList.remove("error");
     saveBtn.disabled = false;
     saveBtn.classList.remove("disabled");
+    saveBtn.textContent = "Save"; // Reset button text
     currentHighlightData = null;
 }
 
 /**
- * Persists the temporary highlight to localStorage and re-renders without the temporary flag,
+ * Persists the temporary highlight to MongoDB and re-renders without the temporary flag,
  * making it a permanent highlight.
  */
-function saveHighlight(pageNum, viewport, highlightLayer) {
+async function saveHighlight(pageNum, viewport, highlightLayer) {
     if (!currentTemporaryHighlight) {
         return;
     }
@@ -318,11 +336,21 @@ function saveHighlight(pageNum, viewport, highlightLayer) {
         highlights[pageKey] = [];
     }
     highlights[pageKey].push(currentTemporaryHighlight);
-    saveHighlights();
 
-    currentTemporaryHighlight = null;
-    renderHighlights(pageNum, viewport, highlightLayer, false);
-    renderComments();
+    try {
+        await saveHighlights();
+        currentTemporaryHighlight = null;
+        renderHighlights(pageNum, viewport, highlightLayer, false);
+        renderComments();
+    } catch (err) {
+        // Revert the change if save failed
+        highlights[pageKey].pop();
+        if (highlights[pageKey].length === 0) {
+            delete highlights[pageKey];
+        }
+        alert("Failed to save highlight. Please try again.");
+        console.error("Error saving highlight:", err);
+    }
 }
 
 /**
@@ -396,8 +424,7 @@ function addHighlight(pageNum, viewport, textLayer, highlightLayer) {
  */
 async function renderPage(pageNum, pdfPage, container) {
     // Setup viewport and scale
-    const scale = 1.5;
-    const viewport = pdfPage.getViewport({ scale: scale });
+    const viewport = pdfPage.getViewport({ scale: PDF_SCALE });
 
     // Create DOM structure
     const pageDiv = document.createElement("div");
@@ -422,7 +449,7 @@ async function renderPage(pageNum, pdfPage, container) {
     textLayer.className = "textLayer";
     textLayer.style.width = viewport.width + "px";
     textLayer.style.height = viewport.height + "px";
-    textLayer.style.setProperty("--scale-factor", scale);
+    textLayer.style.setProperty("--scale-factor", PDF_SCALE);
 
     // Highlight layer: displays saved and temporary highlights (positioned above text layer)
     const highlightLayer = document.createElement("div");
@@ -522,6 +549,12 @@ function renderComments() {
 
     // Sort comments by document position: page, then y (top to bottom), then x (left to right)
     allComments.sort((a, b) => {
+        // Validate rects exist and are non-empty
+        if (!a.highlight.rects || a.highlight.rects.length === 0 ||
+            !b.highlight.rects || b.highlight.rects.length === 0) {
+            return 0;
+        }
+
         const aTopRect = a.highlight.rects[0];
         const bTopRect = b.highlight.rects[0];
 
@@ -585,33 +618,46 @@ function renderComments() {
     });
 }
 
-function deleteComment(pageNum, highlightIndex) {
+async function deleteComment(pageNum, highlightIndex) {
     const pageKey = pageNum.toString();
     if (highlights[pageKey] && highlights[pageKey][highlightIndex]) {
+        const deletedHighlight = highlights[pageKey][highlightIndex];
         highlights[pageKey].splice(highlightIndex, 1);
         if (highlights[pageKey].length === 0) {
             delete highlights[pageKey];
         }
-        saveHighlights();
-        renderComments();
 
-        const pageContainers = document.querySelectorAll(".page-container");
-        pageContainers.forEach((container, index) => {
-            if (index + 1 === pageNum) {
-                const highlightLayer = container.querySelector(".highlight-layer");
-                if (highlightLayer && pdfDocument) {
-                    pdfDocument
-                        .getPage(pageNum)
-                        .then((page) => {
-                            const viewport = page.getViewport({ scale: 1.5 });
-                            renderHighlights(pageNum, viewport, highlightLayer, false);
-                        })
-                        .catch((err) => {
-                            console.warn("Error re-rendering highlights:", err);
-                        });
+        try {
+            await saveHighlights();
+            renderComments();
+
+            const pageContainers = document.querySelectorAll(".page-container");
+            pageContainers.forEach((container, index) => {
+                if (index + 1 === pageNum) {
+                    const highlightLayer = container.querySelector(".highlight-layer");
+                    if (highlightLayer && pdfDocument) {
+                        pdfDocument
+                            .getPage(pageNum)
+                            .then((page) => {
+                                const viewport = page.getViewport({ scale: PDF_SCALE });
+                                renderHighlights(pageNum, viewport, highlightLayer, false);
+                            })
+                            .catch((err) => {
+                                console.warn("Error re-rendering highlights:", err);
+                            });
+                    }
                 }
+            });
+        } catch (err) {
+            // Revert the deletion if save failed
+            if (!highlights[pageKey]) {
+                highlights[pageKey] = [];
             }
-        });
+            highlights[pageKey].splice(highlightIndex, 0, deletedHighlight);
+            renderComments();
+            alert("Failed to delete comment. Please try again.");
+            console.error("Error deleting comment:", err);
+        }
     }
 }
 
@@ -634,14 +680,32 @@ function editComment(commentItem, pageNum, highlightIndex, currentComment) {
     const saveEditBtn = document.createElement("button");
     saveEditBtn.className = "comment-save-edit";
     saveEditBtn.textContent = "Save";
-    saveEditBtn.addEventListener("click", (e) => {
+    saveEditBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         const newComment = textarea.value.trim();
         if (newComment.length > 0) {
             const pageKey = pageNum.toString();
+            const oldComment = highlights[pageKey][highlightIndex].comment;
             highlights[pageKey][highlightIndex].comment = newComment;
-            saveHighlights();
-            renderComments();
+
+            saveEditBtn.disabled = true;
+            saveEditBtn.textContent = "Saving...";
+
+            try {
+                await saveHighlights();
+                renderComments();
+            } catch (err) {
+                // Revert the change if save failed
+                highlights[pageKey][highlightIndex].comment = oldComment;
+                alert("Failed to save comment. Please try again.");
+                console.error("Error saving comment:", err);
+                saveEditBtn.disabled = false;
+                saveEditBtn.textContent = "Save";
+            }
+        } else {
+            // Show error if comment is empty
+            textarea.focus();
+            textarea.style.borderColor = "red";
         }
     });
 
