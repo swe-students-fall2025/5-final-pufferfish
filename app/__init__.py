@@ -22,9 +22,11 @@ def create_app(config_class=Config):
     from app.views.auth_views import auth_bp
     from app.views.main_views import main_bp
     from app.views.resume_views import resume_bp
+    from app.views.profile_views import profile_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(resume_bp)
+    app.register_blueprint(profile_bp)
 
     return app

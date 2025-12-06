@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="profile-container">
+    <h4>{{ user.first_name }} {{ user.last_name }}</h4>
+    <p>Comments on my Resume</p>
+
+    <button id="see-comments-btn">See my comments</button>
+
+    <div class="resume-and-comments">
+
+        <!-- LEFT BUTTON -->
+        <button class="arrow-btn" id="prev-btn">&lt;</button>
+
+        <!-- RESUME PREVIEW BOX -->
+        <div class="resume-box">
+            {% if resume %}
+            <iframe 
+                src="{{ url_for('static', filename='pdf/' + resume.filename) }}" 
+                class="resume-viewer">
+            </iframe>
+            {% else %}
+            <div class="resume-placeholder">
+                No resume uploaded
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- COMMENT BOX -->
+        <div class="comments-box">
+            <h6>Comments</h6>
+            <div id="comment-display" class="comment-slide"></div>
+        </div>
+
+        <!-- RIGHT BUTTON -->
+        <button class="arrow-btn" id="next-btn">&gt;</button>
+
+    </div>
+</div>
+
+<script>
+    window.profileComments = {{ comments | tojson }};
+</script>
+
+<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+
+{% endblock %}
