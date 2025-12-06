@@ -2,13 +2,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Resume - PDF Viewer</title>
+    <title>{{ page_title }}</title>
     <link
       rel="stylesheet"
       type="text/css"
       href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css"
     />
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/resume.css') }}" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/resume.css') }}"
+    />
   </head>
   <body>
     <div id="main-container">
@@ -23,17 +27,27 @@
 
     <!-- Popup form for highlight confirmation -->
     <div id="highlight-popup">
-      <h3>Save Highlight?</h3>
-      <div class="selected-text" id="popup-selected-text"></div>
+      <h3>Add Comment</h3>
       <div class="comment-input-group">
-        <label for="popup-comment-input">Add a comment:</label>
-        <textarea id="popup-comment-input" placeholder="Enter your comment here..." required></textarea>
+        <label for="popup-comment-input">Your comment:</label>
+        <textarea
+          id="popup-comment-input"
+          placeholder="Enter your comment here..."
+          required
+        ></textarea>
       </div>
       <div class="button-group">
         <button class="cancel" id="popup-cancel-btn">Cancel</button>
         <button class="save" id="popup-save-btn">Save</button>
       </div>
     </div>
+
+    <!-- Pass config to JavaScript -->
+    <script>
+      window.RESUME_CONFIG = {
+        documentId: {{ document_id | tojson }}
+      };
+    </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="{{ url_for('static', filename='js/resume.js') }}"></script>

@@ -61,7 +61,7 @@ body {
   bottom: 0;
   overflow: hidden;
   opacity: 0.2;
-  line-height: 1.0;
+  line-height: 1;
   text-size-adjust: none;
   forced-color-adjust: none;
   transform-origin: 0 0;
@@ -84,6 +84,7 @@ body {
   top: 0;
   right: 0;
   bottom: 0;
+  z-index: 2;
   pointer-events: none;
 }
 
@@ -91,7 +92,18 @@ body {
   position: absolute;
   background-color: rgba(255, 255, 0, 0.4);
   border: 1px solid rgba(255, 200, 0, 0.6);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.highlight-rect:hover {
+  background-color: rgba(255, 255, 0, 0.6);
+  border-color: rgba(255, 200, 0, 0.9);
+}
+
+.highlight-rect.active {
+  border: 3px solid rgba(255, 200, 0, 1);
 }
 
 .highlight-rect.temporary {
@@ -220,6 +232,19 @@ canvas {
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   border-left: 4px solid #4a90e2;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.comment-item:hover {
+  background: #f0f0f0;
+  border-left-color: #357abd;
+}
+
+.comment-item.selected {
+  background: #e8e8e8;
+  border-left-color: #357abd;
+  border-left-width: 6px;
 }
 
 .comment-item .comment-text {
@@ -248,10 +273,12 @@ canvas {
   font-size: 12px;
   color: #999;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 
+.comment-item .comment-edit,
 .comment-item .comment-delete {
   background: none;
   border: none;
@@ -263,9 +290,62 @@ canvas {
   transition: background-color 0.2s;
 }
 
+.comment-item .comment-edit:hover {
+  background-color: #e0e0e0;
+  color: #4a90e2;
+}
+
 .comment-item .comment-delete:hover {
   background-color: #e0e0e0;
   color: #d32f2f;
+}
+
+.comment-edit-input {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #4a90e2;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: sans-serif;
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+.comment-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.comment-save-edit,
+.comment-cancel-edit {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.comment-save-edit {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.comment-save-edit:hover {
+  background-color: #357abd;
+}
+
+.comment-cancel-edit {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.comment-cancel-edit:hover {
+  background-color: #d0d0d0;
 }
 
 #comments-list:empty::before {
@@ -285,4 +365,3 @@ canvas {
 #highlight-popup button.cancel:hover {
   background-color: #d0d0d0;
 }
-
