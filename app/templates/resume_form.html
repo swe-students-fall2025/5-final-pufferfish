@@ -2,6 +2,10 @@
 
 {% block title %}Resume Form - Puffer Fish{% endblock %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/resume_form.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="resume-form-container">
     <h1 class="form-title">Resume submission (manually)</h1>
