@@ -26,9 +26,12 @@ class UserService:
     @staticmethod
     def get_user_by_id(user_id):
         try:
+            if not user_id:
+                return None
             user_data = mongo.db.users.find_one({"_id": ObjectId(user_id)})
             return User.from_mongo(user_data)
-        except:
+        except (ValueError, TypeError, Exception) as e:
+            # Invalid ObjectId or other error - return None to prevent crashes
             return None
 
     @staticmethod

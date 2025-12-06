@@ -21,7 +21,7 @@
             {% if current_user.is_authenticated %}
             <li class="nav-item">
               <span class="nav-link"
-                >Welcome, {{ current_user.first_name }}</span
+                >Welcome, {{ current_user.first_name or current_user.email }}</span
               >
             </li>
             <li class="nav-item">
