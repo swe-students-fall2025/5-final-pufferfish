@@ -347,6 +347,7 @@ document.getElementById("addEducation")?.addEventListener("click", function () {
   const addButton = document.getElementById("addEducation");
   section.insertBefore(newEntry, addButton);
   updateEducationCount();
+  saveFormData();
 });
 
 // Add Experience Entry
@@ -457,6 +458,7 @@ document
     const addButton = document.getElementById("addExperience");
     section.insertBefore(newEntry, addButton);
     updateExperienceCount();
+    saveFormData();
   });
 
 // Add Skill Entry
@@ -486,6 +488,7 @@ document.getElementById("addSkill")?.addEventListener("click", function () {
   const addButton = document.getElementById("addSkill");
   section.insertBefore(newEntry, addButton);
   updateSkillsCount();
+  saveFormData();
 });
 
 // Add Project Entry
@@ -536,6 +539,7 @@ document.getElementById("addProject")?.addEventListener("click", function () {
   const addButton = document.getElementById("addProject");
   section.insertBefore(newEntry, addButton);
   updateProjectsCount();
+  saveFormData();
 });
 
 // Add Bullet Point
@@ -573,6 +577,7 @@ function addBulletPoint(entryIndex, type) {
     `;
 
   container.appendChild(newBullet);
+  saveFormData();
 }
 
 // Remove Bullet Point
@@ -580,6 +585,7 @@ function removeBulletPoint(button, entryIndex, type) {
   const bulletRow = button.closest(".form-row");
   if (bulletRow) {
     bulletRow.remove();
+    saveFormData();
   }
 }
 
@@ -599,6 +605,7 @@ function removeEntry(button, type) {
     } else if (type === "project") {
       updateProjectsCount();
     }
+    saveFormData();
   }
 }
 
@@ -705,6 +712,91 @@ document.addEventListener("change", function (e) {
   }
 });
 
+// Save form data to localStorage
+function saveFormData() {
+  const form = document.getElementById("resumeForm");
+  if (!form) return;
+  
+  const formData = new FormData(form);
+  const data = {};
+  
+  // Save all form fields
+  for (let [key, value] of formData.entries()) {
+    if (data[key]) {
+      // Handle multiple values (like checkboxes)
+      if (Array.isArray(data[key])) {
+        data[key].push(value);
+      } else {
+        data[key] = [data[key], value];
+      }
+    } else {
+      data[key] = value;
+    }
+  }
+  
+  // Also save all input values directly
+  const inputs = form.querySelectorAll('input, textarea, select');
+  const inputData = {};
+  inputs.forEach(input => {
+    if (input.type === 'checkbox') {
+      inputData[input.name] = input.checked;
+    } else {
+      inputData[input.name] = input.value;
+    }
+  });
+  
+  localStorage.setItem('resumeFormData', JSON.stringify(inputData));
+}
+
+// Load form data from localStorage
+function loadFormData() {
+  const savedData = localStorage.getItem('resumeFormData');
+  if (!savedData) return;
+  
+  try {
+    const data = JSON.parse(savedData);
+    const form = document.getElementById("resumeForm");
+    if (!form) return;
+    
+    Object.keys(data).forEach(name => {
+      const input = form.querySelector(`[name="${name}"]`);
+      if (input) {
+        if (input.type === 'checkbox') {
+          input.checked = data[name];
+        } else {
+          input.value = data[name];
+        }
+      }
+    });
+  } catch (e) {
+    console.error('Error loading form data:', e);
+  }
+}
+
+// Clear form data from localStorage
+function clearFormData() {
+  localStorage.removeItem('resumeFormData');
+}
+
+// Auto-save form data as user types
+document.addEventListener('input', function(e) {
+  if (e.target.closest('#resumeForm')) {
+    saveFormData();
+  }
+});
+
+// Auto-save on change (for checkboxes, selects)
+document.addEventListener('change', function(e) {
+  if (e.target.closest('#resumeForm')) {
+    saveFormData();
+  }
+});
+
+// Load saved data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  loadFormData();
+});
+
 // Form submission handler
 document.getElementById("resumeForm")?.addEventListener("submit", function (e) {
   // Validate email
@@ -757,6 +849,9 @@ document.getElementById("resumeForm")?.addEventListener("submit", function (e) {
     countInput.value = bullets.length;
     entry.appendChild(countInput);
   });
+  
+  // Clear saved form data after successful submission
+  clearFormData();
 });
 </script>
 {% endblock %}
