@@ -3,13 +3,14 @@
 {% block title %}Resume Form - Puffer Fish{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/resume_form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_form.css') }}">
 {% endblock %}
 
 {% block content %}
 <div class="resume-form-container">
+    {% set prefill_data = prefill_data|default({}) %}
     <h1 class="form-title">Resume submission</h1>
-    
+
     <form id="resumeForm" method="POST" action="{{ url_for('resume_form.resume_form') }}">
         <!-- Personal Contact Info -->
         <section class="form-section">
@@ -17,33 +18,37 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="first_name">First Name:<span class="required">*</span></label>
-                    <input type="text" id="first_name" name="first_name" required>
+                    <input type="text" id="first_name" name="first_name"
+                        value="{{ prefill_data.get('first_name', '') }}" required>
                 </div>
                 <div class="form-group">
                     <label for="last_name">Last Name:<span class="required">*</span></label>
-                    <input type="text" id="last_name" name="last_name" required>
+                    <input type="text" id="last_name" name="last_name" value="{{ prefill_data.get('last_name', '') }}"
+                        required>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label for="email">Email:<span class="required">*</span></label>
-                    <input type="email" id="email" name="email" required 
-                           pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
-                           title="Please enter a valid email address (e.g., user@example.com)">
+                    <input type="email" id="email" name="email" value="{{ prefill_data.get('email', '') }}" required
+                        pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                        title="Please enter a valid email address (e.g., user@example.com)">
                 </div>
                 <div class="form-group">
                     <label for="phone">phone number:</label>
-                    <input type="tel" id="phone" name="phone">
+                    <input type="tel" id="phone" name="phone" value="{{ prefill_data.get('phone', '') }}">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label for="linkedin">Linkedin:</label>
-                    <input type="text" id="linkedin" name="linkedin" placeholder="linkedin.com/in/yourprofile or https://linkedin.com/in/yourprofile">
+                    <input type="text" id="linkedin" name="linkedin"
+                        placeholder="linkedin.com/in/yourprofile or https://linkedin.com/in/yourprofile">
                 </div>
                 <div class="form-group">
                     <label for="website">Website:</label>
-                    <input type="text" id="website" name="website" placeholder="yourwebsite.com or https://yourwebsite.com">
+                    <input type="text" id="website" name="website"
+                        placeholder="yourwebsite.com or https://yourwebsite.com">
                 </div>
             </div>
             <div class="form-row">
@@ -60,7 +65,8 @@
             <div class="form-row">
                 <div class="form-group full-width">
                     <label for="introduction">Introduction:</label>
-                    <textarea id="introduction" name="introduction" rows="4" placeholder="Tell us about yourself..."></textarea>
+                    <textarea id="introduction" name="introduction" rows="4"
+                        placeholder="Tell us about yourself...">{{ prefill_data.get('introduction', '') }}</textarea>
                 </div>
             </div>
         </section>
@@ -68,213 +74,230 @@
         <!-- Education -->
         <section class="form-section" id="educationSection">
             <h2 class="section-title">School Info:</h2>
-            <div class="education-entry" data-index="0">
+            {% set education_list = prefill_data.get('education', []) %}
+            {% if not education_list %}{% set education_list = [{'school': '', 'location': '', 'degree': '', 'field':
+            '', 'graduation_month': '', 'graduation_year': ''}] %}{% endif %}
+
+            {% for edu in education_list %}
+            <div class="education-entry" data-index="{{ loop.index0 }}">
                 <div class="form-row">
                     <div class="form-group">
                         <label>School:<span class="required">*</span></label>
-                        <input type="text" name="education_0_school" required>
+                        <input type="text" name="education_{{ loop.index0 }}_school"
+                            value="{{ edu.school|default('') }}" required>
                     </div>
                     <div class="form-group">
                         <label>School Location:</label>
-                        <input type="text" name="education_0_location">
+                        <input type="text" name="education_{{ loop.index0 }}_location"
+                            value="{{ edu.location|default('') }}">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Degree:</label>
-                        <input type="text" name="education_0_degree" placeholder="e.g., BS, MS, PhD">
+                        <input type="text" name="education_{{ loop.index0 }}_degree"
+                            value="{{ edu.degree|default('') }}" placeholder="e.g., BS, MS, PhD">
                     </div>
                     <div class="form-group">
                         <label>Field of study:</label>
-                        <input type="text" name="education_0_field" placeholder="e.g., Computer Science">
+                        <input type="text" name="education_{{ loop.index0 }}_field" value="{{ edu.field|default('') }}"
+                            placeholder="e.g., Computer Science">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Graduation Date:</label>
                         <div class="date-inputs">
-                            <select name="education_0_graduation_month" class="date-select">
+                            <select name="education_{{ loop.index0 }}_graduation_month" class="date-select">
                                 <option value="">Month</option>
-                                <option value="01">January</option>
-                                <option value="02">February</option>
-                                <option value="03">March</option>
-                                <option value="04">April</option>
-                                <option value="05">May</option>
-                                <option value="06">June</option>
-                                <option value="07">July</option>
-                                <option value="08">August</option>
-                                <option value="09">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
+                                {% for m_idx, m_name in [('01','January'), ('02','February'), ('03','March'),
+                                ('04','April'), ('05','May'), ('06','June'), ('07','July'), ('08','August'),
+                                ('09','September'), ('10','October'), ('11','November'), ('12','December')] %}
+                                <option value="{{ m_idx }}" {% if edu.end_month==m_idx %}selected{% endif %}>{{ m_name
+                                    }}</option>
+                                {% endfor %}
                             </select>
-                            <input type="number" name="education_0_graduation_year" class="date-input" placeholder="Year" min="1900" max="2100">
+                            <input type="number" name="education_{{ loop.index0 }}_graduation_year" class="date-input"
+                                placeholder="Year" min="1900" max="2100" value="{{ edu.end_year|default('') }}">
                         </div>
                     </div>
                 </div>
             </div>
+            {% endfor %}
             <button type="button" class="btn btn-secondary" id="addEducation">Add another education</button>
         </section>
 
         <!-- Work Experience -->
         <section class="form-section" id="experienceSection">
             <h2 class="section-title">Work experience:</h2>
-            <div class="experience-entry" data-index="0">
+            {% set experience_list = prefill_data.get('experience', []) %}
+            {% if not experience_list %}{% set experience_list = [{'title': '', 'company': '', 'location': '',
+            'start_month': '', 'start_year': '', 'end_month': '', 'end_year': '', 'bullets': ['']}] %}{% endif %}
+
+            {% for exp in experience_list %}
+            <div class="experience-entry" data-index="{{ loop.index0 }}">
                 <div class="form-row">
                     <div class="form-group">
                         <label>Title:<span class="required">*</span></label>
-                        <input type="text" name="experience_0_title" required>
+                        <input type="text" name="experience_{{ loop.index0 }}_title" value="{{ exp.title|default('') }}"
+                            required>
                     </div>
                     <div class="form-group">
                         <label>Company:<span class="required">*</span></label>
-                        <input type="text" name="experience_0_company" required>
+                        <input type="text" name="experience_{{ loop.index0 }}_company"
+                            value="{{ exp.company|default('') }}" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group full-width">
                         <label>Location:</label>
-                        <input type="text" name="experience_0_location">
+                        <input type="text" name="experience_{{ loop.index0 }}_location"
+                            value="{{ exp.location|default('') }}">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Start Date:</label>
                         <div class="date-inputs">
-                            <select name="experience_0_start_month" class="date-select">
+                            <select name="experience_{{ loop.index0 }}_start_month" class="date-select">
                                 <option value="">Month</option>
-                                <option value="01">January</option>
-                                <option value="02">February</option>
-                                <option value="03">March</option>
-                                <option value="04">April</option>
-                                <option value="05">May</option>
-                                <option value="06">June</option>
-                                <option value="07">July</option>
-                                <option value="08">August</option>
-                                <option value="09">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
+                                {% for m_idx, m_name in [('01','January'), ('02','February'), ('03','March'),
+                                ('04','April'), ('05','May'), ('06','June'), ('07','July'), ('08','August'),
+                                ('09','September'), ('10','October'), ('11','November'), ('12','December')] %}
+                                <option value="{{ m_idx }}" {% if exp.start_month==m_idx %}selected{% endif %}>{{ m_name
+                                    }}</option>
+                                {% endfor %}
                             </select>
-                            <input type="number" name="experience_0_start_year" class="date-input" placeholder="Year" min="1900" max="2100">
+                            <input type="number" name="experience_{{ loop.index0 }}_start_year" class="date-input"
+                                placeholder="Year" min="1900" max="2100" value="{{ exp.start_year|default('') }}">
                         </div>
                     </div>
                     <div class="form-group">
                         <label>End Date:</label>
                         <div class="date-inputs">
-                            <select name="experience_0_end_month" class="date-select">
+                            <select name="experience_{{ loop.index0 }}_end_month" class="date-select">
                                 <option value="">Month</option>
-                                <option value="01">January</option>
-                                <option value="02">February</option>
-                                <option value="03">March</option>
-                                <option value="04">April</option>
-                                <option value="05">May</option>
-                                <option value="06">June</option>
-                                <option value="07">July</option>
-                                <option value="08">August</option>
-                                <option value="09">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
+                                {% for m_idx, m_name in [('01','January'), ('02','February'), ('03','March'),
+                                ('04','April'), ('05','May'), ('06','June'), ('07','July'), ('08','August'),
+                                ('09','September'), ('10','October'), ('11','November'), ('12','December')] %}
+                                <option value="{{ m_idx }}" {% if exp.end_month==m_idx %}selected{% endif %}>{{ m_name
+                                    }}</option>
+                                {% endfor %}
                             </select>
-                            <input type="number" name="experience_0_end_year" class="date-input" placeholder="Year" min="1900" max="2100">
+                            <input type="number" name="experience_{{ loop.index0 }}_end_year" class="date-input"
+                                placeholder="Year" min="1900" max="2100" value="{{ exp.end_year|default('') }}">
                         </div>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label class="checkbox-label">
-                            <input type="checkbox" name="experience_0_currently_working" value="true">
+                            <input type="checkbox" name="experience_{{ loop.index0 }}_currently_working" value="true">
                             I currently work here
                         </label>
                     </div>
                 </div>
-                <div class="bullets-container" data-entry-index="0">
-                    <div class="form-row" data-bullet-index="0">
+                <div class="bullets-container" data-entry-index="{{ loop.index0 }}">
+                    {% set bullets = exp.bullets|default(['']) %}
+                    {% if not bullets %}{% set bullets = [''] %}{% endif %}
+                    {% set outer_loop = loop %}
+                    {% for bullet in bullets %}
+                    <div class="form-row" data-bullet-index="{{ loop.index0 }}">
                         <div class="form-group full-width">
                             <label>Bullet point:</label>
-                            <input type="text" name="experience_0_bullet_0" placeholder="Describe your responsibilities and achievements...">
+                            <input type="text" name="experience_{{ outer_loop.index0 }}_bullet_{{ loop.index0 }}"
+                                value="{{ bullet }}" placeholder="Describe your responsibilities and achievements...">
                         </div>
                         <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
-                            <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, 0, 'experience')">Delete</button>
+                            <button type="button" class="btn btn-small"
+                                onclick="removeBulletPoint(this, {{ outer_loop.index0 }}, 'experience')">Delete</button>
                         </div>
                     </div>
-                    <div class="form-row" data-bullet-index="1">
-                        <div class="form-group full-width">
-                            <label>Bullet point:</label>
-                            <input type="text" name="experience_0_bullet_1" placeholder="Describe your responsibilities and achievements...">
-                        </div>
-                        <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
-                            <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, 0, 'experience')">Delete</button>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
-                <button type="button" class="btn btn-small" onclick="addBulletPoint(0, 'experience')">Add bullet point</button>
+                <button type="button" class="btn btn-small"
+                    onclick="addBulletPoint({{ loop.index0 }}, 'experience')">Add bullet point</button>
             </div>
+            {% endfor %}
             <button type="button" class="btn btn-secondary" id="addExperience">Add Experience</button>
         </section>
 
         <!-- Skills -->
         <section class="form-section" id="skillsSection">
             <h2 class="section-title">Skills:</h2>
-            <div class="skill-entry" data-index="0">
+            {% set skills_list = prefill_data.get('skills', []) %}
+            {% if not skills_list %}{% set skills_list = [{'category': '', 'skills': ''}] %}{% endif %}
+
+            {% for skill in skills_list %}
+            <div class="skill-entry" data-index="{{ loop.index0 }}">
                 <div class="form-row">
                     <div class="form-group">
                         <label>Skill Category:</label>
-                        <input type="text" name="skill_0_category" placeholder="e.g., Programming Languages, Frameworks, Spoken Languages">
+                        <input type="text" name="skill_{{ loop.index0 }}_category"
+                            value="{{ skill.category|default('') }}"
+                            placeholder="e.g., Programming Languages, Frameworks, Spoken Languages">
                     </div>
                     <div class="form-group">
                         <label>Skills:</label>
-                        <input type="text" name="skill_0_skills" placeholder="Comma-separated list (e.g., Python, Java, JavaScript)">
+                        <input type="text" name="skill_{{ loop.index0 }}_skills" value="{{ skill.skills|default('') }}"
+                            placeholder="Comma-separated list (e.g., Python, Java, JavaScript)">
                     </div>
                 </div>
             </div>
+            {% endfor %}
             <button type="button" class="btn btn-secondary" id="addSkill">Add skill</button>
         </section>
 
         <!-- Projects/Research -->
         <section class="form-section" id="projectsSection">
             <h2 class="section-title">Project/Research</h2>
-            <div class="project-entry" data-index="0">
+            {% set projects_list = prefill_data.get('projects', []) %}
+            {% if not projects_list %}{% set projects_list = [{'title': '', 'name': '', 'bullets': ['']}] %}{% endif %}
+
+            {% for project in projects_list %}
+            <div class="project-entry" data-index="{{ loop.index0 }}">
                 <div class="form-row">
                     <div class="form-group">
                         <label>Title:</label>
-                        <input type="text" name="project_0_title">
+                        <input type="text" name="project_{{ loop.index0 }}_title"
+                            value="{{ project.title|default('') }}">
                     </div>
                     <div class="form-group">
                         <label>Name:</label>
-                        <input type="text" name="project_0_name" placeholder="e.g., CS Senior Capstone, Personal Project">
+                        <input type="text" name="project_{{ loop.index0 }}_name" value="{{ project.name|default('') }}"
+                            placeholder="e.g., CS Senior Capstone, Personal Project">
                     </div>
                 </div>
-                <div class="bullets-container" data-entry-index="0">
-                    <div class="form-row" data-bullet-index="0">
+                <div class="bullets-container" data-entry-index="{{ loop.index0 }}">
+                    {% set bullets = project.bullets|default(['']) %}
+                    {% if not bullets %}{% set bullets = [''] %}{% endif %}
+                    {% set outer_loop = loop %}
+                    {% for bullet in bullets %}
+                    <div class="form-row" data-bullet-index="{{ loop.index0 }}">
                         <div class="form-group full-width">
                             <label>Bullet point:</label>
-                            <input type="text" name="project_0_bullet_0" placeholder="Describe the project...">
+                            <input type="text" name="project_{{ outer_loop.index0 }}_bullet_{{ loop.index0 }}"
+                                value="{{ bullet }}" placeholder="Describe the project...">
                         </div>
                         <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
-                            <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, 0, 'project')">Delete</button>
+                            <button type="button" class="btn btn-small"
+                                onclick="removeBulletPoint(this, {{ outer_loop.index0 }}, 'project')">Delete</button>
                         </div>
                     </div>
-                    <div class="form-row" data-bullet-index="1">
-                        <div class="form-group full-width">
-                            <label>Bullet point:</label>
-                            <input type="text" name="project_0_bullet_1" placeholder="Describe the project...">
-                        </div>
-                        <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
-                            <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, 0, 'project')">Delete</button>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
-                <button type="button" class="btn btn-small" onclick="addBulletPoint(0, 'project')">Add bullet point</button>
+                <button type="button" class="btn btn-small" onclick="addBulletPoint({{ loop.index0 }}, 'project')">Add
+                    bullet point</button>
             </div>
+            {% endfor %}
             <button type="button" class="btn btn-secondary" id="addProject">Add Project/experience</button>
         </section>
 
         <!-- Hidden fields for counts -->
-        <input type="hidden" name="education_count" id="education_count" value="1">
-        <input type="hidden" name="experience_count" id="experience_count" value="1">
-        <input type="hidden" name="skills_count" id="skills_count" value="1">
-        <input type="hidden" name="projects_count" id="projects_count" value="1">
+        <input type="hidden" name="education_count" id="education_count" value="{{ education_list|length }}">
+        <input type="hidden" name="experience_count" id="experience_count" value="{{ experience_list|length }}">
+        <input type="hidden" name="skills_count" id="skills_count" value="{{ skills_list|length }}">
+        <input type="hidden" name="projects_count" id="projects_count" value="{{ projects_list|length }}">
 
         <!-- Submit Button -->
         <div class="form-actions">
@@ -285,6 +308,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{{ url_for('static', filename='js/resume_form.js') }}"></script>
+<script src="{{ url_for('static', filename='js/resume_form.js') }}"></script>
 {% endblock %}
-
