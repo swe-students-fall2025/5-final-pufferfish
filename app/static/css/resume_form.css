@@ -107,6 +107,11 @@ main {
     color: #555;
 }
 
+.form-group label .required {
+    color: #dc3545;
+    margin-left: 0.25rem;
+}
+
 .form-group input[type="text"],
 .form-group input[type="email"],
 .form-group input[type="tel"],
