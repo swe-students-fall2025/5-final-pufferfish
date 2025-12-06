@@ -23,7 +23,9 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" id="email" name="email" required 
+                           pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                           title="Please enter a valid email address (e.g., user@example.com)">
                 </div>
                 <div class="form-group">
                     <label for="phone">phone number:</label>
@@ -33,11 +35,11 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="linkedin">Linkedin:</label>
-                    <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/yourprofile">
+                    <input type="text" id="linkedin" name="linkedin" placeholder="linkedin.com/in/yourprofile or https://linkedin.com/in/yourprofile">
                 </div>
                 <div class="form-group">
                     <label for="website">Website</label>
-                    <input type="url" id="website" name="website" placeholder="https://yourwebsite.com">
+                    <input type="text" id="website" name="website" placeholder="yourwebsite.com or https://yourwebsite.com">
                 </div>
             </div>
             <div class="form-row">
@@ -621,6 +623,63 @@ function updateProjectsCount() {
   document.getElementById("projects_count").value = count;
 }
 
+// URL and Email Validation
+function validateURL(url) {
+  if (!url) return true; // Empty is OK (not required)
+  // Accept URLs with or without http://, https://, or www.
+  // Just check if it looks like a URL (has at least a domain)
+  const urlPattern = /^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(\/.*)?$|^https?:\/\/.+/i;
+  return urlPattern.test(url.trim());
+}
+
+function validateEmail(email) {
+  const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailPattern.test(email);
+}
+
+// Auto-format URLs to add https:// if missing (optional, doesn't require it)
+function formatURL(url) {
+  if (!url) return url;
+  url = url.trim();
+  // Only auto-add https:// if it looks like a domain (has a dot and looks like a URL)
+  // But don't force it - user can leave it without https://
+  if (url && !url.match(/^https?:\/\//i) && url.match(/^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\./)) {
+    // Optional: uncomment below to auto-add https://
+    // return "https://" + url;
+  }
+  return url;
+}
+
+// Real-time validation for email and URLs
+document.addEventListener("blur", function (e) {
+  if (e.target.type === "email") {
+    const email = e.target.value;
+    if (email && !validateEmail(email)) {
+      e.target.setCustomValidity("Please enter a valid email address (e.g., user@example.com)");
+      e.target.reportValidity();
+    } else {
+      e.target.setCustomValidity("");
+    }
+  } else if (e.target.id === "linkedin" || e.target.id === "website") {
+    let url = e.target.value;
+    if (url) {
+      url = url.trim();
+      // Optional: auto-format URL (commented out to allow URLs without https://)
+      // const formattedURL = formatURL(url);
+      // if (formattedURL !== url) {
+      //   e.target.value = formattedURL;
+      //   url = formattedURL;
+      // }
+    }
+    if (url && !validateURL(url)) {
+      e.target.setCustomValidity("Please enter a valid URL (e.g., linkedin.com/in/profile or https://linkedin.com/in/profile)");
+      e.target.reportValidity();
+    } else {
+      e.target.setCustomValidity("");
+    }
+  }
+}, true);
+
 // Handle currently working checkbox - disable end date
 document.addEventListener("change", function (e) {
   if (
@@ -648,6 +707,32 @@ document.addEventListener("change", function (e) {
 
 // Form submission handler
 document.getElementById("resumeForm")?.addEventListener("submit", function (e) {
+  // Validate email
+  const emailInput = document.getElementById("email");
+  if (emailInput && !validateEmail(emailInput.value)) {
+    e.preventDefault();
+    emailInput.setCustomValidity("Please enter a valid email address");
+    emailInput.reportValidity();
+    return false;
+  }
+  
+  // Validate URLs if provided (lenient - allows with or without https://)
+  const linkedinInput = document.getElementById("linkedin");
+  if (linkedinInput && linkedinInput.value && !validateURL(linkedinInput.value)) {
+    e.preventDefault();
+    linkedinInput.setCustomValidity("Please enter a valid URL (e.g., linkedin.com/in/profile or https://linkedin.com/in/profile)");
+    linkedinInput.reportValidity();
+    return false;
+  }
+  
+  const websiteInput = document.getElementById("website");
+  if (websiteInput && websiteInput.value && !validateURL(websiteInput.value)) {
+    e.preventDefault();
+    websiteInput.setCustomValidity("Please enter a valid URL (e.g., yourwebsite.com or https://yourwebsite.com)");
+    websiteInput.reportValidity();
+    return false;
+  }
+  
   // Update all counts before submission
   updateEducationCount();
   updateExperienceCount();
