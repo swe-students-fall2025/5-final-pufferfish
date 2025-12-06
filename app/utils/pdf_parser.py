@@ -32,23 +32,31 @@ def parse_resume_pdf(file_stream) -> Dict[str, Any]:
 
     # --- Section Extraction ---
     sections = extract_sections(text)
-    
+
     # --- Structured Parsing ---
     if 'education' in sections:
         extracted_data['education'] = parse_education(sections['education'])
-    
+
     if 'experience' in sections:
         extracted_data['experience'] = parse_experience(sections['experience'])
-        
+
     if 'skills' in sections:
         extracted_data['skills'] = parse_skills(sections['skills'])
-        
+
     if 'projects' in sections:
         extracted_data['projects'] = parse_projects(sections['projects'])
 
     return extracted_data
 
 def extract_contact_info(text: str, data: Dict[str, Any]):
+    """
+    Helper function to extract contact info
+    
+    :param text: text to extract from
+    :type text: str
+    :param data: extracted data dict
+    :type data: Dict[str, Any]
+    """
     # Email
     email_match = re.search(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', text)
     if email_match:
@@ -60,7 +68,7 @@ def extract_contact_info(text: str, data: Dict[str, Any]):
     if phone_match:
         data['phone'] = phone_match.group(0).strip()
         
-    # Name Heuristic (First line)
+    # First line for name
     lines = [line.strip() for line in text.split('\n') if line.strip()]
     if lines:
         name_parts = lines[0].split()
@@ -70,6 +78,14 @@ def extract_contact_info(text: str, data: Dict[str, Any]):
             data['last_name'] = " ".join(name_parts[1:])
 
 def extract_sections(text: str) -> Dict[str, str]:
+    """
+    Helper function to identify sections and extract info
+    
+    :param text: text to extract from 
+    :type text: str
+    :return: dictionary containing extract info
+    :rtype: Dict[str, str]
+    """
     lower_text = text.lower()
     section_map = {
         'education': ['education', 'university', 'college', 'academic background'],
@@ -77,17 +93,17 @@ def extract_sections(text: str) -> Dict[str, str]:
         'skills': ['skills', 'technologies', 'technical skills'],
         'projects': ['projects', 'personal projects', 'portfolio']
     }
-    
+
     found_headers = []
     for name, keywords in section_map.items():
         for keyword in keywords:
             pattern = r'\b' + re.escape(keyword) + r'\b'
             for match in re.finditer(pattern, lower_text):
                 found_headers.append({'start': match.start(), 'name': name})
-    
+
     found_headers.sort(key=lambda x: x['start'])
-    
-    # Filter unique sections, preferring first occurrence
+
+    # Filter unique sections
     unique_headers = []
     seen = set()
     for h in found_headers:
@@ -95,26 +111,33 @@ def extract_sections(text: str) -> Dict[str, str]:
             unique_headers.append(h)
             seen.add(h['name'])
     unique_headers.sort(key=lambda x: x['start'])
-    
+
     sections = {}
     for i, header in enumerate(unique_headers):
         start = header['start']
         end = unique_headers[i+1]['start'] if i < len(unique_headers) - 1 else len(text)
-        # Skip the header line itself roughly
         content = text[start:end]
-        # Remove first line (header)
+        # Remove first line - header
         parts = content.split('\n', 1)
         if len(parts) > 1:
             sections[header['name']] = parts[1].strip()
         else:
             sections[header['name']] = content.strip()
-            
+
     return sections
 
 def parse_education(text: str) -> List[Dict[str, Any]]:
+    """
+    Helper to parse education info
+    
+    :param text: text to extract from
+    :type text: str
+    :return: dict containing extracted info
+    :rtype: List[Dict[str, Any]]
+    """
     entries = []
-    # Heuristic: split by lines. 
-    # Assume groups of lines represent an entry. 
+    # Heuristic: split by lines
+    # Assume groups of lines represent an entry
     # Look for date patterns to identify new entries?
     # Or just lines that look like school names?
     
@@ -122,7 +145,6 @@ def parse_education(text: str) -> List[Dict[str, Any]]:
     lines = [l.strip() for l in text.split('\n') if l.strip()]
     
     # We'll group by detecting "University" or "College" or just chunks of 2-3 lines
-    # This is hard without layout. Let's try to find dates.
     
     # Pattern for date range: "Aug. 2018 – May 2021"
     date_pattern = r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z.]*\s+\d{4})\s*–\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z.]*\s+\d{4}|Present)'
@@ -133,9 +155,6 @@ def parse_education(text: str) -> List[Dict[str, Any]]:
     for line in lines:
         date_match = re.search(date_pattern, line, re.IGNORECASE)
         if date_match:
-            # This line contains the date. 
-            # The previous lines in buffer might be school and degree.
-            # Pop from buffer
             if buffer:
                 current_entry['school'] = buffer[0]
                 if len(buffer) > 1:
@@ -170,6 +189,14 @@ def parse_education(text: str) -> List[Dict[str, Any]]:
     return entries
 
 def parse_experience(text: str) -> List[Dict[str, Any]]:
+    """
+    Helper to parse exp.
+    
+    :param text: text to extract from
+    :type text: str
+    :return: dict containing extracted info
+    :rtype: List[Dict[str, Any]]
+    """
     entries = []
     lines = [l.strip() for l in text.split('\n') if l.strip()]
     
@@ -198,7 +225,6 @@ def parse_experience(text: str) -> List[Dict[str, Any]]:
             
             # Title/Company usually on this line or previous lines?
             # Sample: "Undergraduate Research Assistant June 2020 – Present"
-            # Title is likely before the date on the same line
             pre_date = line[:date_match.start()].strip()
             if pre_date:
                 current_entry['title'] = pre_date
@@ -212,7 +238,6 @@ def parse_experience(text: str) -> List[Dict[str, Any]]:
                  # Sample: "Texas A&M University College Station, TX"
                  current_entry['company'] = line
             else:
-                 # Just append to description if needed, or ignore
                  pass
                  
     if current_entry:
@@ -222,6 +247,7 @@ def parse_experience(text: str) -> List[Dict[str, Any]]:
 
 def parse_projects(text: str) -> List[Dict[str, Any]]:
     # Similar to experience but Title might be Project Name
+    # TODO: create logic for parsing projects
     return parse_experience(text) # Reuse logic for now
 
 def parse_skills(text: str) -> List[Dict[str, Any]]:
