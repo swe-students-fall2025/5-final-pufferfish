@@ -22,12 +22,21 @@ def create_app(config_class=Config):
     def load_user(user_id):
         return UserService.get_user_by_id(user_id)
 
-    # Blueprints
+    # Error handlers
+    @app.errorhandler(500)
+    def internal_error(error):
+        app.logger.error(f'Internal Server Error: {str(error)}', exc_info=True)
+        from flask import render_template, flash, redirect, url_for
+        flash('An internal server error occurred. Please try again later.')
+        return redirect(url_for('main.index'))
+
+    # Blueprints - import all blueprints
     from app.views.auth_views import auth_bp
     from app.views.main_views import main_bp
     from app.views.resume_views import resume_bp
     from app.views.resume_form_views import resume_form_bp
 
+    # Register all blueprints once
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(resume_bp)
