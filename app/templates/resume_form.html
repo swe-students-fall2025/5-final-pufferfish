@@ -31,7 +31,7 @@
                 <div class="form-group">
                     <label for="email">Email:<span class="required">*</span></label>
                     <input type="email" id="email" name="email" value="{{ prefill_data.get('email', '') }}" required
-                        pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                        pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
                         title="Please enter a valid email address (e.g., user@example.com)">
                 </div>
                 <div class="form-group">
