@@ -1,0 +1,356 @@
+#main-container {
+  display: flex;
+  height: calc(100vh - 4rem);
+  overflow: hidden;
+}
+
+#content-wrapper {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  background-color: var(--pico-background-color);
+}
+
+#comments-sidebar {
+  width: 350px;
+  background: var(--pico-card-background-color);
+  border-left: 1px solid var(--pico-muted-border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
+}
+
+#comments-sidebar h3 {
+  margin: 0;
+  padding: 1rem;
+  border-bottom: 1px solid var(--pico-muted-border-color);
+  color: var(--pico-color);
+  font-weight: 600;
+  font-size: 1.1rem;
+  background: var(--pico-card-sectioning-background-color);
+  text-align: center;
+}
+
+#comments-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--pico-spacing);
+}
+
+.page-container {
+  position: relative;
+  margin: 10px auto;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+.canvas-wrapper {
+  position: relative;
+}
+
+.textLayer {
+  position: absolute;
+  text-align: initial;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  opacity: 0.2;
+  line-height: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 1;
+  letter-spacing: normal;
+  word-spacing: normal;
+}
+
+.textLayer span {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+.highlight-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.highlight-rect {
+  position: absolute;
+  background-color: rgba(255, 255, 0, 0.4);
+  border: 1px solid rgba(255, 200, 0, 0.6);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.highlight-rect:hover {
+  background-color: rgba(255, 255, 0, 0.6);
+  border-color: rgba(255, 200, 0, 0.9);
+}
+
+.highlight-rect.active {
+  border: 3px solid rgba(255, 200, 0, 1);
+}
+
+.highlight-rect.temporary {
+  background-color: rgba(255, 255, 0, 0.3);
+  border: 1px dashed rgba(255, 200, 0, 0.8);
+}
+
+canvas {
+  display: block;
+}
+
+/* Highlight Popup */
+#highlight-popup {
+  position: fixed !important;
+  inset: 0 !important;
+  margin: auto !important;
+  width: fit-content;
+  height: fit-content;
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
+  max-width: 500px;
+  z-index: 10000;
+  display: none;
+}
+
+#highlight-popup.visible {
+  display: block;
+}
+
+#highlight-popup article {
+  padding: var(--pico-spacing);
+  margin: 0;
+}
+
+#highlight-popup header {
+  margin-bottom: var(--pico-spacing);
+  padding: 0;
+  text-align: center;
+}
+
+#highlight-popup .comment-input-group {
+  margin-bottom: var(--pico-spacing);
+}
+
+#highlight-popup .comment-input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+#highlight-popup .comment-input-group textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  margin-bottom: 0;
+}
+
+#highlight-popup .selected-text {
+  background: var(--pico-card-sectioning-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  padding: var(--pico-spacing);
+  margin-bottom: var(--pico-spacing);
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+#highlight-popup footer {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--pico-muted-border-color);
+}
+
+#highlight-popup footer button {
+  display: inline-block !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+#highlight-popup footer button:disabled,
+#highlight-popup footer button.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Comment Items */
+.comment-item {
+  padding: var(--pico-spacing);
+  margin-bottom: var(--pico-spacing);
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  border-left: 4px solid var(--pico-primary);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.comment-item:hover {
+  background: var(--pico-card-sectioning-background-color);
+  border-left-color: var(--pico-primary-hover);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.comment-item.selected {
+  background: var(--pico-card-sectioning-background-color);
+  border-left-color: var(--pico-primary);
+  border-left-width: 6px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pico-primary) 30%, transparent),
+    0 4px 12px color-mix(in srgb, var(--pico-primary) 20%, transparent);
+}
+
+.comment-item .comment-text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--pico-color);
+  margin-bottom: 0.5rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.comment-item .comment-highlight {
+  font-size: 0.75rem;
+  color: var(--pico-muted-color);
+  background: var(--pico-card-sectioning-background-color);
+  padding: 0.5rem;
+  border-radius: var(--pico-border-radius);
+  margin-bottom: 0.5rem;
+  font-style: italic;
+  max-height: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid var(--pico-muted-border-color);
+}
+
+.comment-item .comment-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.comment-item .comment-edit,
+.comment-item .comment-delete {
+  display: inline-block !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  border-radius: var(--pico-border-radius);
+  transition: all 0.15s ease;
+  background: var(--pico-secondary-background);
+  border: 1px solid var(--pico-muted-border-color);
+  color: var(--pico-color);
+}
+
+.comment-item .comment-edit:hover {
+  background: var(--pico-primary);
+  color: var(--pico-primary-inverse);
+  border-color: var(--pico-primary);
+}
+
+.comment-item .comment-delete:hover {
+  background: var(--pico-del-color);
+  color: var(--pico-primary-inverse);
+  border-color: var(--pico-del-color);
+}
+
+/* Edit Mode */
+.comment-edit-input {
+  width: 100%;
+  min-height: 60px;
+  resize: vertical;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.comment-edit-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.comment-save-edit,
+.comment-cancel-edit {
+  display: inline-block !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  border-radius: var(--pico-border-radius);
+}
+
+.comment-save-edit {
+  background: var(--pico-primary);
+  color: var(--pico-primary-inverse);
+  border: 1px solid var(--pico-primary);
+}
+
+.comment-save-edit:hover:not(:disabled) {
+  background: var(--pico-primary-hover);
+  border-color: var(--pico-primary-hover);
+}
+
+.comment-save-edit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.comment-cancel-edit {
+  background: var(--pico-secondary-background);
+  color: var(--pico-color);
+  border: 1px solid var(--pico-muted-border-color);
+}
+
+.comment-cancel-edit:hover {
+  background: var(--pico-secondary-hover);
+}
+
+/* Empty State */
+#comments-list:empty::before {
+  content: "No comments yet. Highlight text to add a comment.";
+  display: block;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--pico-muted-color);
+  font-style: italic;
+  font-size: 0.875rem;
+  background: var(--pico-card-sectioning-background-color);
+  border-radius: var(--pico-border-radius);
+  border: 1px dashed var(--pico-muted-border-color);
+}

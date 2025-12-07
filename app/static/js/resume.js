@@ -41,7 +41,9 @@ async function saveHighlights() {
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to save highlights: ${response.status} ${response.statusText}`);
+        throw new Error(
+            `Failed to save highlights: ${response.status} ${response.statusText}`
+        );
     }
 
     return await response.json();
@@ -206,10 +208,6 @@ function showHighlightPopup(selectedText, pageNum, viewport, highlightLayer) {
 
     commentInput.value = "";
     commentInput.classList.remove("error");
-
-    const popupRect = popup.getBoundingClientRect();
-    popup.style.left = window.innerWidth / 2 - popupRect.width / 2 + "px";
-    popup.style.top = window.innerHeight / 2 - popupRect.height / 2 + "px";
 
     popup.classList.add("visible");
 
@@ -550,8 +548,12 @@ function renderComments() {
     // Sort comments by document position: page, then y (top to bottom), then x (left to right)
     allComments.sort((a, b) => {
         // Validate rects exist and are non-empty
-        if (!a.highlight.rects || a.highlight.rects.length === 0 ||
-            !b.highlight.rects || b.highlight.rects.length === 0) {
+        if (
+            !a.highlight.rects ||
+            a.highlight.rects.length === 0 ||
+            !b.highlight.rects ||
+            b.highlight.rects.length === 0
+        ) {
             return 0;
         }
 
