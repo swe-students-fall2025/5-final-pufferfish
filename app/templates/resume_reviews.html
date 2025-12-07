@@ -1,9 +1,9 @@
 {% extends "layout.html" %}
 
-{% block title %}Profile - Pufferfish{% endblock %}
+{% block title %}My Resume Reviews - Pufferfish{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_reviews.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/resume_viewer.css') }}">
 {% endblock %}
 
@@ -45,5 +45,5 @@
     reviews: {{ reviews | tojson }}
   };
 </script>
-<script src="{{ url_for('static', filename='js/profile_resume.js') }}"></script>
+<script src="{{ url_for('static', filename='js/resume_reviews.js') }}"></script>
 {% endblock %}
