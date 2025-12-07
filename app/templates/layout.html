@@ -1,51 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Resume Sharing{% endblock %}</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.violet.min.css"
+    />
+    {% block extra_css %}{% endblock %}
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}Resume Sharing{% endblock %}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-  {% block extra_css %}{% endblock %}
-</head>
+  <body>
+    <nav class="container-fluid">
+      <ul>
+        <li>
+          <a href="{{ url_for('main.index') }}" class="contrast"
+            ><strong>Pufferfish</strong></a
+          >
+        </li>
+      </ul>
+      <ul>
+        {% if current_user.is_authenticated %}
+        <li>
+          <small
+            >Welcome, {{ current_user.first_name or current_user.email }}</small
+          >
+        </li>
+        <li>
+          <a href="{{ url_for('resume_form.upload_resume') }}">Resume Form</a>
+        </li>
+        <li><a href="{{ url_for('profile.profile_home') }}">Profile</a></li>
+        <li>
+          <a
+            href="{{ url_for('auth.logout') }}"
+            role="button"
+            class="secondary outline"
+            >Logout</a
+          >
+        </li>
+        {% else %}
+        <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+        <li><a href="{{ url_for('auth.signup') }}" role="button">Signup</a></li>
+        {% endif %}
+      </ul>
+    </nav>
 
-<body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container">
-      <a class="navbar-brand" href="{{ url_for('main.index') }}">Pufferfish</a>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav ms-auto">
-          {% if current_user.is_authenticated %}
-          <li class="nav-item">
-            <span class="nav-link">Welcome, {{ current_user.first_name or current_user.email }}</span>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('resume_form.upload_resume') }}">Resume Form</a>
-            <a class="nav-link" href="{{ url_for('profile.profile_home') }}">Profile</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
-          </li>
-          {% else %}
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('auth.signup') }}">Signup</a>
-          </li>
-          {% endif %}
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container mt-4">
-    {% with messages = get_flashed_messages() %} {% if messages %} {% for
-    message in messages %}
-    <div class="alert alert-info">{{ message }}</div>
-    {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
-  </div>
-  {% block extra_js %}{% endblock %}
-</body>
-
+    {% block main %}
+    <main class="container">
+      {% with messages = get_flashed_messages() %} {% if messages %} {% for
+      message in messages %}
+      <article class="pico-background-azure-50">{{ message }}</article>
+      {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
+    </main>
+    {% endblock %} {% block extra_js %}{% endblock %}
+  </body>
 </html>

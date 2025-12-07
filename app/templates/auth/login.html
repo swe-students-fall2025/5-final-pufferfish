@@ -1,24 +1,25 @@
 {% extends "layout.html" %}
 
+{% block title %}Login - Pufferfish{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">Login</div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Login</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+<article>
+  <header>
+    <h2>Login</h2>
+  </header>
+  <form method="POST">
+    <label for="email">
+      Email
+      <input type="email" id="email" name="email" placeholder="you@example.com" required>
+    </label>
+    <label for="password">
+      Password
+      <input type="password" id="password" name="password" placeholder="Your password" required>
+    </label>
+    <button type="submit">Login</button>
+  </form>
+  <footer>
+    <small>Don't have an account? <a href="{{ url_for('auth.signup') }}">Sign up</a></small>
+  </footer>
+</article>
 {% endblock %}

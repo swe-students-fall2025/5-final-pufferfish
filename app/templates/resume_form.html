@@ -124,7 +124,7 @@
                 </div>
             </div>
             {% endfor %}
-            <button type="button" class="btn btn-secondary" id="addEducation">Add another education</button>
+            <button type="button" class="secondary outline" id="addEducation">Add another education</button>
         </section>
 
         <!-- Work Experience -->
@@ -209,17 +209,17 @@
                                 value="{{ bullet }}" placeholder="Describe your responsibilities and achievements...">
                         </div>
                         <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
-                            <button type="button" class="btn btn-small"
+                            <button type="button" class="secondary outline small-btn"
                                 onclick="removeBulletPoint(this, {{ outer_loop.index0 }}, 'experience')">Delete</button>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-                <button type="button" class="btn btn-small"
+                <button type="button" class="secondary outline small-btn"
                     onclick="addBulletPoint({{ loop.index0 }}, 'experience')">Add bullet point</button>
             </div>
             {% endfor %}
-            <button type="button" class="btn btn-secondary" id="addExperience">Add Experience</button>
+            <button type="button" class="secondary outline" id="addExperience">Add Experience</button>
         </section>
 
         <!-- Skills -->
@@ -245,7 +245,7 @@
                 </div>
             </div>
             {% endfor %}
-            <button type="button" class="btn btn-secondary" id="addSkill">Add skill</button>
+            <button type="button" class="secondary outline" id="addSkill">Add skill</button>
         </section>
 
         <!-- Projects/Research -->
@@ -280,17 +280,17 @@
                                 value="{{ bullet }}" placeholder="Describe the project...">
                         </div>
                         <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
-                            <button type="button" class="btn btn-small"
+                            <button type="button" class="secondary outline small-btn"
                                 onclick="removeBulletPoint(this, {{ outer_loop.index0 }}, 'project')">Delete</button>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-                <button type="button" class="btn btn-small" onclick="addBulletPoint({{ loop.index0 }}, 'project')">Add
+                <button type="button" class="secondary outline small-btn" onclick="addBulletPoint({{ loop.index0 }}, 'project')">Add
                     bullet point</button>
             </div>
             {% endfor %}
-            <button type="button" class="btn btn-secondary" id="addProject">Add Project/experience</button>
+            <button type="button" class="secondary outline" id="addProject">Add Project/experience</button>
         </section>
 
         <!-- Hidden fields for counts -->
@@ -301,7 +301,7 @@
 
         <!-- Submit Button -->
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary btn-large">Choose a template</button>
+            <button type="submit">Choose a template</button>
         </div>
     </form>
 </div>

@@ -1,32 +1,35 @@
 {% extends "layout.html" %}
 
+{% block title %}Sign Up - Pufferfish{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">Signup</div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="first_name" class="form-label">First Name</label>
-                        <input type="text" class="form-control" id="first_name" name="first_name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="last_name" class="form-label">Last Name</label>
-                        <input type="text" class="form-control" id="last_name" name="last_name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Signup</button>
-                </form>
-            </div>
-        </div>
+<article>
+  <header>
+    <h2>Sign Up</h2>
+  </header>
+  <form method="POST">
+    <div class="grid">
+      <label for="first_name">
+        First Name
+        <input type="text" id="first_name" name="first_name" placeholder="John" required>
+      </label>
+      <label for="last_name">
+        Last Name
+        <input type="text" id="last_name" name="last_name" placeholder="Doe" required>
+      </label>
     </div>
-</div>
+    <label for="email">
+      Email
+      <input type="email" id="email" name="email" placeholder="you@example.com" required>
+    </label>
+    <label for="password">
+      Password
+      <input type="password" id="password" name="password" placeholder="Choose a password" required>
+    </label>
+    <button type="submit">Sign Up</button>
+  </form>
+  <footer>
+    <small>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></small>
+  </footer>
+</article>
 {% endblock %}

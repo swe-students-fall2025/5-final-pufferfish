@@ -1,15 +1,15 @@
-{% extends "layout.html" %} {% block content %}
-<div class="text-center">
+{% extends "layout.html" %}
+
+{% block content %}
+<article style="text-align: center;">
   <h1>Welcome</h1>
   {% if current_user.is_authenticated %}
   <p>You are logged in as {{ current_user.email }}</p>
-  <div class="mt-4">
-    <a href="{{ url_for('resume_form.resume_form') }}" class="btn btn-primary btn-lg">
-      Create Your Resume
-    </a>
-  </div>
+  <a href="{{ url_for('resume_form.resume_form') }}" role="button">
+    Create Your Resume
+  </a>
   {% else %}
   <p>Please login or signup to continue.</p>
   {% endif %}
-</div>
+</article>
 {% endblock %}
