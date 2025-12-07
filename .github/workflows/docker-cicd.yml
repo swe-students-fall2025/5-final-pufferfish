@@ -9,7 +9,11 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
+    # Deploy only when Web App CI succeeded on a push to main (merged PRs land as pushes)
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
     steps:
       - uses: actions/checkout@v4
 
