@@ -15,9 +15,11 @@
     <nav class="container-fluid">
       <ul>
         <li>
-          <a href="{{ url_for('main.index') }}" class="contrast"
-            ><strong>Pufferfish</strong></a
-          >
+          <a href="{{ url_for('main.index') }}" class="contrast" style="display: flex; align-items: center; gap: 10px;">
+          <img src="{{ url_for('static', filename='logo/pufferfish_logo.png') }}" alt="Pufferfish Logo"
+            style="height: 50px; width: auto;" />
+            <strong>Pufferfish</strong>
+          </a>
         </li>
       </ul>
       <ul>
