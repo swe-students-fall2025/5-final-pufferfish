@@ -74,7 +74,7 @@
       <h2 class="section-title">School Info:</h2>
       {% set education_list = prefill_data.get('education', []) %}
       {% if not education_list %}{% set education_list = [{'school': '', 'location': '', 'degree': '', 'field':
-      '', 'graduation_month': '', 'graduation_year': ''}] %}{% endif %}
+      '', 'graduation_month': '', 'graduation_year': '', 'coursework': '', 'activities': ''}] %}{% endif %}
 
       {% for edu in education_list %}
       <div class="education-entry" data-index="{{ loop.index0 }}">
@@ -116,6 +116,18 @@
               <input type="number" name="education_{{ loop.index0 }}_graduation_year" class="date-input"
                 placeholder="Year" min="1900" max="2100" value="{{ edu.end_year|default('') }}">
             </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Coursework (optional):</label>
+            <input type="text" name="education_{{ loop.index0 }}_coursework" value="{{ edu.coursework|default('') }}"
+              placeholder="e.g., Data Structures, Algorithms, Database Systems">
+          </div>
+          <div class="form-group">
+            <label>Activities (optional):</label>
+            <input type="text" name="education_{{ loop.index0 }}_activities" value="{{ edu.activities|default('') }}"
+              placeholder="e.g., Student Council, Coding Club, Research Assistant">
           </div>
         </div>
       </div>
@@ -374,6 +386,16 @@
                     </select>
                     <input type="number" name="education_${newIndex}_graduation_year" class="date-input" placeholder="Year" min="1900" max="2100">
                 </div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Coursework (optional):</label>
+                <input type="text" name="education_${newIndex}_coursework" placeholder="e.g., Data Structures, Algorithms, Database Systems">
+            </div>
+            <div class="form-group">
+                <label>Activities (optional):</label>
+                <input type="text" name="education_${newIndex}_activities" placeholder="e.g., Student Council, Coding Club, Research Assistant">
             </div>
         </div>
         <button type="button" class="btn btn-small" onclick="removeEntry(this, 'education')">Remove</button>
