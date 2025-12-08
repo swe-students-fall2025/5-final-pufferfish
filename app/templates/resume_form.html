@@ -210,13 +210,17 @@
                         </div>
                         <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
                             <button type="button" class="secondary outline small-btn"
-                                onclick="removeBulletPoint(this, {{ outer_loop.index0 }}, 'experience')">Delete</button>
+                                data-entry-index="{{ outer_loop.index0 }}"
+                                data-entry-type="experience"
+                                onclick="removeBulletPoint(this)">Delete</button>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
                 <button type="button" class="secondary outline small-btn"
-                    onclick="addBulletPoint({{ loop.index0 }}, 'experience')">Add bullet point</button>
+                    data-entry-index="{{ loop.index0 }}"
+                    data-entry-type="experience"
+                    onclick="addBulletPoint(this)">Add bullet point</button>
             </div>
             {% endfor %}
             <button type="button" class="secondary outline" id="addExperience">Add Experience</button>
@@ -281,13 +285,17 @@
                         </div>
                         <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
                             <button type="button" class="secondary outline small-btn"
-                                onclick="removeBulletPoint(this, {{ outer_loop.index0 }}, 'project')">Delete</button>
+                                data-entry-index="{{ outer_loop.index0 }}"
+                                data-entry-type="project"
+                                onclick="removeBulletPoint(this)">Delete</button>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
                 <button type="button" class="secondary outline small-btn"
-                    onclick="addBulletPoint({{ loop.index0 }}, 'project')">Add
+                    data-entry-index="{{ loop.index0 }}"
+                    data-entry-type="project"
+                    onclick="addBulletPoint(this)">Add
                     bullet point</button>
             </div>
             {% endfor %}
@@ -299,6 +307,14 @@
         <input type="hidden" name="experience_count" id="experience_count" value="{{ experience_list|length }}">
         <input type="hidden" name="skills_count" id="skills_count" value="{{ skills_list|length }}">
         <input type="hidden" name="projects_count" id="projects_count" value="{{ projects_list|length }}">
+
+        <!-- Data attributes container for JavaScript -->
+        <div id="app-data" 
+             data-education-count="{{ education_list|length }}"
+             data-experience-count="{{ experience_list|length }}"
+             data-skills-count="{{ skills_list|length }}"
+             data-projects-count="{{ projects_list|length }}"
+             style="display: none;"></div>
 
         <!-- Submit Button -->
         <div class="form-actions">
@@ -312,10 +328,11 @@
 <script>
 // Resume form dynamic functionality
 
-let educationCount = {{ education_list|length }};
-let experienceCount = {{ experience_list|length }};
-let skillsCount = {{ skills_list|length }};
-let projectsCount = {{ projects_list|length }};
+const appData = document.getElementById('app-data');
+let educationCount = parseInt(appData.dataset.educationCount) || 0;
+let experienceCount = parseInt(appData.dataset.experienceCount) || 0;
+let skillsCount = parseInt(appData.dataset.skillsCount) || 0;
+let projectsCount = parseInt(appData.dataset.projectsCount) || 0;
 
 // Add Education Entry
 document.getElementById("addEducation")?.addEventListener("click", function () {
@@ -468,7 +485,7 @@ document
                     <input type="text" name="experience_${newIndex}_bullet_0" placeholder="Describe your responsibilities and achievements...">
                 </div>
                 <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
-                    <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, ${newIndex}, 'experience')">Delete</button>
+                    <button type="button" class="secondary outline small-btn" data-entry-index="${newIndex}" data-entry-type="experience" onclick="removeBulletPoint(this)">Delete</button>
                 </div>
             </div>
             <div class="form-row" data-bullet-index="1">
@@ -477,11 +494,11 @@ document
                     <input type="text" name="experience_${newIndex}_bullet_1" placeholder="Describe your responsibilities and achievements...">
                 </div>
                 <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
-                    <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, ${newIndex}, 'experience')">Delete</button>
+                    <button type="button" class="secondary outline small-btn" data-entry-index="${newIndex}" data-entry-type="experience" onclick="removeBulletPoint(this)">Delete</button>
                 </div>
             </div>
         </div>
-        <button type="button" class="btn btn-small" onclick="addBulletPoint(${newIndex}, 'experience')">Add bullet point</button>
+        <button type="button" class="secondary outline small-btn" data-entry-index="${newIndex}" data-entry-type="experience" onclick="addBulletPoint(this)">Add bullet point</button>
         <button type="button" class="btn btn-small" onclick="removeEntry(this, 'experience')">Remove Experience</button>
     `;
 
@@ -549,7 +566,7 @@ document.getElementById("addProject")?.addEventListener("click", function () {
                     <input type="text" name="project_${newIndex}_bullet_0" placeholder="Describe the project...">
                 </div>
                 <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
-                    <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, ${newIndex}, 'project')">Delete</button>
+                    <button type="button" class="secondary outline small-btn" data-entry-index="${newIndex}" data-entry-type="project" onclick="removeBulletPoint(this)">Delete</button>
                 </div>
             </div>
             <div class="form-row" data-bullet-index="1">
@@ -558,11 +575,11 @@ document.getElementById("addProject")?.addEventListener("click", function () {
                     <input type="text" name="project_${newIndex}_bullet_1" placeholder="Describe the project...">
                 </div>
                 <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
-                    <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, ${newIndex}, 'project')">Delete</button>
+                    <button type="button" class="secondary outline small-btn" data-entry-index="${newIndex}" data-entry-type="project" onclick="removeBulletPoint(this)">Delete</button>
                 </div>
             </div>
         </div>
-        <button type="button" class="btn btn-small" onclick="addBulletPoint(${newIndex}, 'project')">Add bullet point</button>
+        <button type="button" class="secondary outline small-btn" data-entry-index="${newIndex}" data-entry-type="project" onclick="addBulletPoint(this)">Add bullet point</button>
         <button type="button" class="btn btn-small" onclick="removeEntry(this, 'project')">Remove Project</button>
     `;
 
@@ -573,7 +590,10 @@ document.getElementById("addProject")?.addEventListener("click", function () {
 });
 
 // Add Bullet Point
-function addBulletPoint(entryIndex, type) {
+function addBulletPoint(button) {
+  const entryIndex = button.dataset.entryIndex;
+  const type = button.dataset.entryType;
+  
   // Find the specific container by looking for the parent entry first, then the bullets container
   const parentEntry = document.querySelector(
     `.${type}-entry[data-index="${entryIndex}"]`
@@ -602,7 +622,7 @@ function addBulletPoint(entryIndex, type) {
             <input type="text" name="${type}_${entryIndex}_bullet_${bulletIndex}" placeholder="${placeholder}">
         </div>
         <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; padding-top: 1.5rem;">
-            <button type="button" class="btn btn-small" onclick="removeBulletPoint(this, ${entryIndex}, '${type}')">Delete</button>
+            <button type="button" class="secondary outline small-btn" data-entry-index="${entryIndex}" data-entry-type="${type}" onclick="removeBulletPoint(this)">Delete</button>
         </div>
     `;
 
@@ -611,7 +631,7 @@ function addBulletPoint(entryIndex, type) {
 }
 
 // Remove Bullet Point
-function removeBulletPoint(button, entryIndex, type) {
+function removeBulletPoint(button) {
   const bulletRow = button.closest(".form-row");
   if (bulletRow) {
     bulletRow.remove();
