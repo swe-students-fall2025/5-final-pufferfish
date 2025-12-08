@@ -8,21 +8,7 @@
 {% endblock %}
 
 {% block main %}
-<!-- Resume Selector -->
-<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-    <label for="resume-selector" style="font-weight: bold;">Select Resume:</label>
-    <select id="resume-selector" class="form-control" style="max-width: 300px;">
-      {% for resume in user_resumes %}
-      <option value="{{ resume._id }}" {% if resume._id==current_resume_id %}selected{% endif %}>
-        {{ resume.title }}
-      </option>
-      {% endfor %}
-    </select>
-  </div>
-</div>
-
-<div class="resume-viewer-container">
+<div class="resume-viewer-container" style="margin-top: 20px;">
 
   <!-- Column 1: Previous Button -->
   <div class="nav-col">
@@ -37,7 +23,7 @@
   <!-- Column 3: Comments Sidebar -->
   <aside id="comments-sidebar">
     <div class="reviewer-header">
-      <small>Reviewer</small>
+      <small id="version-label">Loading version...</small>
       <h5 id="reviewer-name" style="margin:0;">Loading...</h5>
     </div>
 
@@ -55,26 +41,60 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="{{ url_for('static', filename='js/resume_viewer.js') }}"></script>
 <script>
-  const documentId = {{ resume_id | tojson }}; // resume_id logical key
-  const pdfUrl = {{ resume_path | tojson }}; // streaming URL for PDF
-  let reviews = {{ reviews | tojson }} || []; // array of { reviewer_id, reviewer_name, highlights }
+  /* eslint-disable */
+  const resumeEntries = JSON.parse('{{ resume_entries | tojson | safe }}');
+  const currentResumeId = JSON.parse('{{ current_resume_id | tojson | safe }}');
+  let currentResumeIndex = Math.max(
+    0,
+    resumeEntries.findIndex((r) => r._id === currentResumeId)
+  );
+  if (currentResumeIndex === -1) currentResumeIndex = 0;
   let currentReviewIndex = 0;
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
   const PDF_SCALE = 1.5;
   let pdfDocument = null;
+  let viewerApi = null;
+  const pdfCache = new Map();
 
-  // Handle resume selection change
-  document.addEventListener('DOMContentLoaded', function () {
-    const resumeSelector = document.getElementById('resume-selector');
-    if (resumeSelector) {
-      resumeSelector.addEventListener('change', function () {
-        const selectedId = this.value;
-        window.location.href = '/resume-reviews?resume_id=' + selectedId;
-      });
+  async function getPdfData(url) {
+    if (pdfCache.has(url)) {
+      // pdf.js may transfer the underlying buffer to a worker, so return a copy
+      const cached = pdfCache.get(url);
+      return cached.slice();
     }
-  });
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const data = new Uint8Array(buffer);
+    pdfCache.set(url, data);
+    return data.slice();
+  }
+
+  function getCurrentEntry() {
+    return resumeEntries[currentResumeIndex] || null;
+  }
+
+  function getCurrentReviews() {
+    const entry = getCurrentEntry();
+    return (entry && entry.reviews) || [];
+  }
+
+  function updateVersionDisplay() {
+    const versionLabel = document.getElementById("version-label");
+    const prevBtn = document.getElementById("prev-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const entry = getCurrentEntry();
+    if (!entry) {
+      versionLabel.textContent = "No resume";
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+      return;
+    }
+    versionLabel.textContent = `${entry.title || "Resume"} (${currentResumeIndex + 1}/${resumeEntries.length})`;
+    prevBtn.disabled = currentResumeIndex === 0;
+    nextBtn.disabled = currentResumeIndex === resumeEntries.length - 1;
+  }
 
   // helper to create highlight rectangles
   function createHighlightRect(bounds, highlightId = null) {
@@ -101,6 +121,7 @@
   function renderHighlights(pageNum, viewport, highlightLayer) {
     highlightLayer.innerHTML = "";
 
+    const reviews = getCurrentReviews();
     const currentReview = reviews[currentReviewIndex];
     if (!currentReview) return;
 
@@ -155,30 +176,37 @@
 
   // main PDF render
   async function render() {
-    const viewer = createResumeViewer({
-      pdfUrl,
+    const entry = getCurrentEntry();
+    if (!entry) {
+      const viewer = document.getElementById("viewer");
+      if (viewer) viewer.innerHTML = "<p>No resumes found.</p>";
+      return;
+    }
+
+    const pdfData = await getPdfData(entry.resume_path);
+
+    viewerApi = createResumeViewer({
+      pdfData,
       scale: PDF_SCALE,
       renderHighlightsForPage: (pageNum, viewport, highlightLayer) =>
         renderHighlights(pageNum, viewport, highlightLayer),
     });
 
-    await viewer.render();
-    pdfDocument = viewer.getDocument();
+    await viewerApi.render();
+    pdfDocument = viewerApi.getDocument();
 
     // initial UI state
     updateReviewerDisplay();
+    updateVersionDisplay();
   }
 
   // update the UI for the current reviewer
   function updateReviewerDisplay() {
     const reviewerNameEl = document.getElementById("reviewer-name");
-    const prevBtn = document.getElementById("prev-btn");
-    const nextBtn = document.getElementById("next-btn");
+    const reviews = getCurrentReviews();
 
     if (reviews.length === 0) {
       reviewerNameEl.textContent = "No Reviews";
-      prevBtn.disabled = true;
-      nextBtn.disabled = true;
       renderComments(); // will clear comments
       updateAllHighlights(); // will clear highlights
       return;
@@ -186,10 +214,6 @@
 
     const currentReview = reviews[currentReviewIndex];
     reviewerNameEl.textContent = currentReview.reviewer_name || "Anonymous";
-
-    // update buttons
-    prevBtn.disabled = currentReviewIndex === 0;
-    nextBtn.disabled = currentReviewIndex === reviews.length - 1;
 
     // update content
     renderComments();
@@ -201,6 +225,7 @@
     const commentsList = document.getElementById("comments-list");
     commentsList.innerHTML = "";
 
+    const reviews = getCurrentReviews();
     const currentReview = reviews[currentReviewIndex];
     if (!currentReview) {
       commentsList.innerHTML = "<p>No comments available.</p>";
@@ -292,17 +317,19 @@
   }
 
   // event Listeners for Buttons
-  document.getElementById("prev-btn").addEventListener("click", () => {
-    if (currentReviewIndex > 0) {
-      currentReviewIndex--;
-      updateReviewerDisplay();
+  document.getElementById("prev-btn").addEventListener("click", async () => {
+    if (currentResumeIndex > 0) {
+      currentResumeIndex--;
+      currentReviewIndex = 0;
+      await render();
     }
   });
 
-  document.getElementById("next-btn").addEventListener("click", () => {
-    if (currentReviewIndex < reviews.length - 1) {
-      currentReviewIndex++;
-      updateReviewerDisplay();
+  document.getElementById("next-btn").addEventListener("click", async () => {
+    if (currentResumeIndex < resumeEntries.length - 1) {
+      currentResumeIndex++;
+      currentReviewIndex = 0;
+      await render();
     }
   });
 
