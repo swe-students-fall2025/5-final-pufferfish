@@ -28,12 +28,15 @@
           <small
             >Welcome, {{ current_user.first_name or current_user.email }}</small
           >
-      </li>
-      <li>
-        <a href="{{ url_for('resume_form.upload_resume') }}">Resume Form</a>
-      </li>
-      <li><a href="{{ url_for('resume_reviews.resume_reviews_home') }}">My Resume Reviews</a></li>
-      <li>
+        </li>
+        <li>
+          <a href="{{ url_for('resume_form.upload_resume') }}">Resume Form</a>
+        </li>
+        <li>
+          <a href="{{ url_for('resume.store_resume') }}">Store Resume</a>
+        </li>
+        <li><a href="{{ url_for('resume_reviews.resume_reviews_home') }}">My Resume Reviews</a></li>
+        <li>
           <a
             href="{{ url_for('auth.logout') }}"
             role="button"

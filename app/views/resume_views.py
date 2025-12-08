@@ -1,18 +1,33 @@
-from flask import Blueprint, render_template, send_from_directory, jsonify, request
-from flask_login import current_user
+import io
+from flask import (
+    Blueprint,
+    render_template,
+    send_from_directory,
+    jsonify,
+    request,
+    flash,
+    url_for,
+    send_file,
+)
 from app.services.resume_service import ResumeService
 
 resume_bp = Blueprint("resume", __name__)
 
 
-@resume_bp.route("/resume/feedback")
-def resume_feedback():
-    """Resume feedback submission page - allows users to highlight and comment on the resume"""
-    document_id = "/static/pdf/jakes-resume.pdf" # TODO: Should be passed in as param
+@resume_bp.route("/resume/feedback/<resume_id>")
+def resume_feedback(resume_id):
+    """Resume feedback page - view a stored resume and leave comments on it."""
+    if not resume_id:
+        return jsonify({"error": "resumeId is required"}), 400
+
+    doc, _file = ResumeService.get_resume_pdf(resume_id)
+    if not _file:
+        return jsonify({"error": "Resume not found"}), 404
+
     return render_template(
         "resume_viewer.html",
-        document_id=document_id,
-        page_title="Submit Resume Feedback",
+        document_id=url_for("resume.get_resume_pdf_file", resume_id=resume_id),
+        page_title=f"Resume Feedback - {doc.get('filename', 'Resume')}",
     )
 
 
@@ -48,3 +63,37 @@ def save_highlights():
 
     ResumeService.save_highlights(document_id, highlights, reviewer_id, reviewer_name)
     return jsonify({"status": "success"}), 200
+
+
+@resume_bp.route("/resume/store", methods=["GET", "POST"])
+def store_resume():
+    """Simple page to upload a PDF and store it in MongoDB (GridFS)."""
+    resume_id = None
+    if request.method == "POST":
+        file = request.files.get("resume")
+        if not file or file.filename == "":
+            flash("Please select a PDF to upload.")
+        elif not file.filename.lower().endswith(".pdf"):
+            flash("Only PDF files are supported right now.")
+        else:
+            resume_id = ResumeService.save_resume_pdf(file)
+            flash(
+                "Resume stored successfully. Use this ID with /resume/feedback/<resumeId>."
+            )
+    return render_template("resume_store.html", resume_id=resume_id)
+
+
+@resume_bp.route("/resume/<resume_id>/pdf")
+def get_resume_pdf_file(resume_id):
+    """Stream the stored PDF from MongoDB for viewing/downloading."""
+    doc, file_obj = ResumeService.get_resume_pdf(resume_id)
+    if not file_obj:
+        return jsonify({"error": "Resume not found"}), 404
+
+    return send_file(
+        file_obj,
+        mimetype=doc.get("content_type", "application/pdf"),
+        download_name=doc.get("filename", "resume.pdf"),
+        as_attachment=False,
+        conditional=True,
+    )
