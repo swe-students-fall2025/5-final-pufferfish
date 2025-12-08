@@ -5,6 +5,8 @@
 .vscode/
 .vscode/settings.json
 
+app/static/resumes/*.pdf
+
 # emacs backups
 *~
 
