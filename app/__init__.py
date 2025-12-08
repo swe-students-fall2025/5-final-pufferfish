@@ -36,6 +36,7 @@ def create_app(config_class=Config):
     from app.views.resume_views import resume_bp
     from app.views.resume_form_views import resume_form_bp
     from app.views.profile_views import profile_bp
+    from app.views.feed_views import feed_bp
 
     # Register all blueprints once
     app.register_blueprint(auth_bp)
@@ -43,5 +44,6 @@ def create_app(config_class=Config):
     app.register_blueprint(resume_bp)
     app.register_blueprint(resume_form_bp)
     app.register_blueprint(profile_bp)
+    app.register_blueprint(feed_bp)
 
     return app
