@@ -52,11 +52,13 @@ def test_parse_resume_pdf_basic():
         assert exp['start_year'] == '2020'
         
         # Education
-        # Expect: [{'school': 'MIT', 'degree': 'BS in CS', ...}]
+        # Expect: [{'school': 'MIT', 'degree': 'BS', 'field': 'CS' ...}]
         assert len(result.get('education', [])) >= 1
         edu = result['education'][0]
         assert 'MIT' in edu['school']
-        assert 'CS' in edu.get('degree', '') or 'CS' in edu.get('school', '') # Depending on heuristic
+        # Updated assertion for degree and field separation
+        assert 'BS' in edu.get('degree', '')
+        assert 'CS' in edu.get('field', '')
         
         # Skills
         assert len(result.get('skills', [])) >= 1
