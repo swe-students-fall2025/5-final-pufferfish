@@ -46,4 +46,10 @@ def create_app(config_class=Config):
     app.register_blueprint(profile_bp)
     app.register_blueprint(feed_bp)
 
+    # mongo
+    mongo.db.resumes.create_index([
+        ('$**', 'text')
+    ])
+
+
     return app

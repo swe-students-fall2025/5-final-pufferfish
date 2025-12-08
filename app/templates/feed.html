@@ -18,14 +18,6 @@
         <form method="GET" action="{{ url_for('feed.feed_home') }}">
             <input type="text" name="q" placeholder="Search resumes..." value="{{ query }}">
 
-            <select name="experience_level">
-                <option value="">All Experience Levels</option>
-                <option value="Entry" {% if filters.experience_level=='Entry' %}selected{% endif %}>Entry</option>
-                <option value="Mid" {% if filters.experience_level=='Mid' %}selected{% endif %}>Mid</option>
-                <option value="Senior" {% if filters.experience_level=='Senior' %}selected{% endif %}>Senior</option>
-            </select>
-
-            <input type="text" name="location" placeholder="Location" value="{{ filters.location }}">
 
             <button type="submit">Search</button>
         </form>
@@ -64,13 +56,13 @@
     <div class="pagination">
         {% if page > 1 %}
         <a
-            href="{{ url_for('feed.feed_home', q=query, experience_level=filters.experience_level, location=filters.location, page=page-1) }}">Previous</a>
+            href="{{ url_for('feed.feed_home', q=query, page=page-1) }}">Previous</a>
         {% endif %}
 
         <span>Page {{ page }} of {{ (total // per_page) + 1 if total > 0 else 1 }}</span>
 
         {% if page * per_page < total %} <a
-            href="{{ url_for('feed.feed_home', q=query, experience_level=filters.experience_level, location=filters.location, page=page+1) }}">
+            href="{{ url_for('feed.feed_home', q=query, page=page+1) }}">
             Next</a>
             {% endif %}
     </div>
