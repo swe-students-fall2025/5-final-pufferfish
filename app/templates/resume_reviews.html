@@ -8,6 +8,20 @@
 {% endblock %}
 
 {% block content %}
+<!-- Resume Selector -->
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+    <label for="resume-selector" style="font-weight: bold;">Select Resume:</label>
+    <select id="resume-selector" class="form-control" style="max-width: 300px;">
+      {% for resume in user_resumes %}
+      <option value="{{ loop.index0 }}" {% if loop.index0==current_resume_index %}selected{% endif %}>
+        {{ resume.title }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
 <div class="resume-viewer-container">
 
   <!-- Column 1: Previous Button -->
@@ -44,6 +58,17 @@
     documentId: "{{ resume_path }}",
     reviews: {{ reviews | tojson }}
   };
+
+  // Handle resume selection change
+  document.addEventListener('DOMContentLoaded', function () {
+    const resumeSelector = document.getElementById('resume-selector');
+    if (resumeSelector) {
+      resumeSelector.addEventListener('change', function () {
+        const selectedIndex = this.value;
+        window.location.href = '/resume-reviews?resume_index=' + selectedIndex;
+      });
+    }
+  });
 </script>
 <script src="{{ url_for('static', filename='js/resume_reviews.js') }}"></script>
 {% endblock %}

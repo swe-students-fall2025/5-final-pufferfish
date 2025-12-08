@@ -6,7 +6,6 @@ from app.extensions import mongo
 
 class ResumeService:
     @staticmethod
-    @staticmethod
     def get_highlights(document_id, reviewer_id=None):
         query = {"document_id": document_id}
         if reviewer_id:
@@ -45,10 +44,39 @@ class ResumeService:
             update_data["reviewer_name"] = reviewer_name
 
         mongo.db.highlights.update_one(
-            {"document_id": document_id},
-            {"$set": {"highlights": highlights}},
-            upsert=True,
+            query,
+            {"$set": update_data},
+            upsert=True
         )
+
+    @staticmethod
+    def get_user_resumes(user_id):
+        """Get all resumes owned by a user"""
+        cursor = mongo.db.resumes.find({"user_id": user_id})
+        resumes = []
+        for doc in cursor:
+            resumes.append({
+                "_id": str(doc.get("_id")),
+                "resume_path": doc.get("resume_path"),
+                "title": doc.get("title", "Untitled Resume"),
+                "created_at": doc.get("created_at")
+            })
+        return resumes
+    
+    @staticmethod
+    def get_resume_by_id(resume_id):
+        """Get a specific resume by ID"""
+        doc = mongo.db.resumes.find_one({"_id": resume_id})
+        if doc:
+            return {
+                "_id": str(doc.get("_id")),
+                "user_id": doc.get("user_id"),
+                "resume_path": doc.get("resume_path"),
+                "title": doc.get("title", "Untitled Resume"),
+                "created_at": doc.get("created_at")
+            }
+        return None
+
 
     @staticmethod
     def save_resume_pdf(file_storage):
