@@ -4,6 +4,9 @@ import os
 from flask import Flask, jsonify, render_template
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/mydb")
@@ -13,6 +16,7 @@ db = client.get_database()
 
 @app.route("/")
 def index():
+    print('hello')
     return render_template("index.html")
 
 
@@ -41,4 +45,5 @@ def health():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    debug = os.environ.get("debug", "false").lower() == "true"
+    app.run(host="0.0.0.0", port=8000, debug=debug)
