@@ -8,7 +8,7 @@ async function generateThumbnail(pdfUrl, canvas) {
         const pdf = await loadingTask.promise;
         const page = await pdf.getPage(1);
 
-        const scale = 0.9; // Smaller scale for thumbnails
+        const scale = 1; // Smaller scale for thumbnails
         const viewport = page.getViewport({ scale });
 
         const context = canvas.getContext('2d');

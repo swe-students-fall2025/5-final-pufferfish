@@ -5,6 +5,7 @@
     padding: 1rem;
     overflow-y: auto;
     max-height: 600px;
+    align-items: start;
 }
 
 .thumbnail-card {
