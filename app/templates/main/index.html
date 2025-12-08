@@ -1,15 +1,199 @@
-{% extends "layout.html" %}
+{% extends "layout.html" %} {% block content %}
+<section
+  id="hero"
+  style="text-align: center; padding: 4rem 0; margin-bottom: 2rem"
+>
+  <hgroup>
+    <h1 style="font-size: 3rem; margin-bottom: 1rem">
+      Craft Your Career with Pufferfish
+    </h1>
+    <p style="font-size: 1.5rem; color: var(--pico-muted-color)">
+      Build, share, and perfect your resume with the help of a supportive
+      community.
+    </p>
+  </hgroup>
+  <div
+    style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem"
+  >
+    {% if current_user.is_authenticated %}
+    <a
+      href="{{ url_for('resume_form.upload_resume') }}"
+      role="button"
+      class="contrast"
+      >Get Started</a
+    >
+    <a
+      href="{{ url_for('resume_reviews.resume_reviews_home') }}"
+      role="button"
+      class="secondary outline"
+      >View Reviews</a
+    >
+    <!--TODO: Change to feed link-->
+    <a
+      href="{{ url_for('resume_reviews.resume_reviews_home') }}"
+      role="button"
+      class="secondary outline"
+      >Search Resume Feed</a
+    >
+    {% else %}
+    <a href="{{ url_for('auth.signup') }}" role="button" class="contrast"
+      >Join Now</a
+    >
+    <a
+      href="{{ url_for('auth.login') }}"
+      role="button"
+      class="secondary outline"
+      >Login</a
+    >
+    {% endif %}
+  </div>
+</section>
 
-{% block content %}
-<article style="text-align: center;">
-  <h1>Welcome</h1>
-  {% if current_user.is_authenticated %}
-  <p>You are logged in as {{ current_user.email }}</p>
-  <a href="{{ url_for('resume_form.resume_form') }}" role="button">
-    Create Your Resume
-  </a>
-  {% else %}
-  <p>Please login or signup to continue.</p>
-  {% endif %}
-</article>
+<!-- Features Section -->
+<section id="features" style="padding: 2rem 0">
+  <h2 style="text-align: center; margin-bottom: 3rem">Why Pufferfish?</h2>
+  <div class="grid">
+    <article>
+      <header><strong>Smart Parsing</strong></header>
+      <p>
+        Upload your existing PDF resume and let our smart parser extract key
+        details to populate your profile instantly. No more manual entry.
+      </p>
+    </article>
+    <article>
+      <header><strong>Community Feedback</strong></header>
+      <p>
+        Get valuable insights from peers. Specific comments on your resume
+        content help you refine your bullet points and stand out to recruiters.
+      </p>
+    </article>
+    <article>
+      <header><strong>Dynamic Templates</strong></header>
+      <p>
+        Switch between professional templates with a single click. Tailor your
+        resume's look and feel to match different job applications effortlessly.
+      </p>
+    </article>
+  </div>
+</section>
+
+<section id="value" style="padding: 2rem 0">
+  <div class="grid">
+    <div>
+      <h3>Elevate Your Job Search</h3>
+      <p>
+        In a competitive market, every detail counts. Pufferfish gives you the
+        edge by combining modern design with collaborative improvement. Don't
+        just send a resume; send your <em>best</em> resume.
+      </p>
+      <ul>
+        <li>ATS-Friendly formats</li>
+        <li>Real Feedback</li>
+      </ul>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center">
+      <article style="width: 100%; text-align: center">
+        <blockquote>
+          "We all need people who will give us feedback. That's how we improve."
+          <footer>
+            <cite>- Bill Gates</cite>
+          </footer>
+        </blockquote>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="team" style="padding: 2rem 0; text-align: center">
+  <h2 style="margin-bottom: 2rem">Meet the Team</h2>
+  <div
+    class="grid"
+    style="
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+    "
+  >
+    <div>
+      <article>
+        <img
+          src="{{ url_for('static', filename='img/xiaomin.png') }}"
+          alt="Xiaomin"
+          style="
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+          "
+        />
+        <div><strong>Xiaomin</strong></div>
+      </article>
+    </div>
+    <div>
+      <article>
+        <img
+          src="{{ url_for('static', filename='img/alex.png') }}"
+          alt="Alexander Xie"
+          style="
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+          "
+        />
+        <div><strong>Alexander Xie</strong></div>
+      </article>
+    </div>
+    <div>
+      <article>
+        <img
+          src="{{ url_for('static', filename='img/coco.jpeg') }}"
+          alt="Coco"
+          style="
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+          "
+        />
+        <div><strong>Coco</strong></div>
+      </article>
+    </div>
+    <div>
+      <article>
+        <img
+          src="{{ url_for('static', filename='img/david.png') }}"
+          alt="David"
+          style="
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+          "
+        />
+        <div><strong>David</strong></div>
+      </article>
+    </div>
+    <div>
+      <article>
+        <img
+          src="{{ url_for('static', filename='img/phoebe.png') }}"
+          alt="Phoebe"
+          style="
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+          "
+        />
+        <div><strong>Phoebe</strong></div>
+      </article>
+    </div>
+  </div>
+</section>
+
 {% endblock %}
