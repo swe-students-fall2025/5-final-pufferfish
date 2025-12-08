@@ -25,6 +25,7 @@ def resume_reviews_home():
             error="No resumes found",
             reviews=[],
             user_resumes=[],
+            resume_id="",
             resume_path=""
         )
     

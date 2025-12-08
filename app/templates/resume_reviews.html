@@ -53,7 +53,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="{{ url_for('static', filename='js/resume_viewer_core.js') }}"></script>
+<script src="{{ url_for('static', filename='js/resume_viewer.js') }}"></script>
 <script>
   const documentId = {{ resume_id | tojson }}; // resume_id logical key
   const pdfUrl = {{ resume_path | tojson }}; // streaming URL for PDF

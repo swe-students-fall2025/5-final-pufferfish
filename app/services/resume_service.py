@@ -10,7 +10,7 @@ class ResumeService:
         query = {"document_id": document_id}
         if reviewer_id:
             query["reviewer_id"] = reviewer_id
-
+            
         doc = mongo.db.highlights.find_one(query)
         return doc.get("highlights", {}) if doc else {}
 
@@ -22,8 +22,8 @@ class ResumeService:
         for doc in cursor:
             reviews.append(
                 {
-                    "reviewer_id": doc.get("reviewer_id"),
-                    "reviewer_name": doc.get("reviewer_name", "Anonymous"),
+                "reviewer_id": doc.get("reviewer_id"),
+                "reviewer_name": doc.get("reviewer_name", "Anonymous"),
                     "highlights": doc.get("highlights", {}),
                 }
             )
@@ -37,7 +37,7 @@ class ResumeService:
         query = {"document_id": document_id}
         if reviewer_id:
             query["reviewer_id"] = reviewer_id
-
+            
         update_data = {"highlights": highlights, "document_id": document_id}
         if reviewer_id:
             update_data["reviewer_id"] = reviewer_id
@@ -58,12 +58,12 @@ class ResumeService:
                     "_id": resume_id,
                     # use stored path if present; otherwise fall back to streaming route
                     "resume_path": doc.get("resume_path") or f"/resume/{resume_id}/pdf",
-                    "title": doc.get("title", "Untitled Resume"),
+                "title": doc.get("title", "Untitled Resume"),
                     "created_at": doc.get("created_at"),
                 }
             )
         return resumes
-
+    
     @staticmethod
     def get_resume_by_id(resume_id):
         """Get a specific resume by ID"""

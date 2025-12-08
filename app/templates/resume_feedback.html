@@ -27,7 +27,7 @@
 </div>
 {% endblock %} {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="{{ url_for('static', filename='js/resume_viewer_core.js') }}"></script>
+<script src="{{ url_for('static', filename='js/resume_viewer.js') }}"></script>
 <script>
     const documentId = {{ document_id | tojson }};
     const pdfUrl = {{ pdf_url | tojson }};
