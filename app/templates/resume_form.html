@@ -245,7 +245,7 @@
     <section class="form-section" id="projectsSection">
       <h2 class="section-title">Project/Research</h2>
       {% set projects_list = prefill_data.get('projects', []) %}
-      {% if not projects_list %}{% set projects_list = [{'title': '', 'name': '', 'bullets': ['']}] %}{% endif %}
+      {% if not projects_list %}{% set projects_list = [{'title': '', 'name': '', 'skills': '', 'bullets': ['']}] %}{% endif %}
 
       {% for project in projects_list %}
       <div class="project-entry" data-index="{{ loop.index0 }}">
@@ -258,6 +258,13 @@
             <label>Name:</label>
             <input type="text" name="project_{{ loop.index0 }}_name" value="{{ project.name|default('') }}"
               placeholder="e.g., CS Senior Capstone, Personal Project">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>Skills/Tools Used (optional):</label>
+            <input type="text" name="project_{{ loop.index0 }}_skills" value="{{ project.skills|default('') }}"
+              placeholder="e.g., Python, Flask, React, Docker">
           </div>
         </div>
         <div class="bullets-container" data-entry-index="{{ loop.index0 }}">
@@ -538,6 +545,12 @@
             <div class="form-group">
                 <label>Name:</label>
                 <input type="text" name="project_${newIndex}_name" placeholder="e.g., CS Senior Capstone, Personal Project">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label>Skills/Tools Used (optional):</label>
+                <input type="text" name="project_${newIndex}_skills" placeholder="e.g., React, Express.js, Python, MongoDB">
             </div>
         </div>
         <div class="bullets-container" data-entry-index="${newIndex}">
