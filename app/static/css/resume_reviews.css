@@ -53,34 +53,3 @@ aside#comments-sidebar {
 .reviewer-header h5 {
     margin: 0;
 }
-
-/* Comment Items */
-.comment-item {
-    background-color: var(--pico-card-background-color);
-    border: 1px solid var(--pico-muted-border-color);
-    border-radius: var(--pico-border-radius);
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.75rem;
-    cursor: pointer;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.comment-item:hover {
-    border-color: var(--pico-primary);
-}
-
-.comment-item.selected {
-    border-color: var(--pico-primary);
-    box-shadow: 0 0 0 2px var(--pico-primary-focus);
-}
-
-.comment-text {
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
-/* Empty state */
-#comments-list p {
-    color: var(--pico-muted-color);
-    font-style: italic;
-}
