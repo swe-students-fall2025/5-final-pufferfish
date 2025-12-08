@@ -8,74 +8,78 @@
 
 {% block content %}
 <article class="feed-container">
-  <header>
-    <h4>Resume Feed</h4>
-    <p>Browse and search resumes</p>
-  </header>
+    <header>
+        <h4>Resume Feed</h4>
+        <p>Browse and search resumes</p>
+    </header>
 
-  <!-- SEARCH AND FILTER SECTION -->
-  <div class="search-filters">
-    <form method="GET" action="{{ url_for('feed.feed_home') }}">
-      <input type="text" name="q" placeholder="Search resumes..." value="{{ query }}">
-      
-      <select name="experience_level">
-        <option value="">All Experience Levels</option>
-        <option value="Entry" {% if filters.experience_level == 'Entry' %}selected{% endif %}>Entry</option>
-        <option value="Mid" {% if filters.experience_level == 'Mid' %}selected{% endif %}>Mid</option>
-        <option value="Senior" {% if filters.experience_level == 'Senior' %}selected{% endif %}>Senior</option>
-      </select>
-      
-      <input type="text" name="location" placeholder="Location" value="{{ filters.location }}">
-      
-      <button type="submit">Search</button>
-    </form>
-  </div>
+    <!-- SEARCH AND FILTER SECTION -->
+    <div class="search-filters">
+        <form method="GET" action="{{ url_for('feed.feed_home') }}">
+            <input type="text" name="q" placeholder="Search resumes..." value="{{ query }}">
 
-  <div class="resume-and-details">
-    <!-- LEFT BUTTON -->
-    <button class="arrow-btn secondary outline" id="prev-btn">&lt;</button>
+            <select name="experience_level">
+                <option value="">All Experience Levels</option>
+                <option value="Entry" {% if filters.experience_level=='Entry' %}selected{% endif %}>Entry</option>
+                <option value="Mid" {% if filters.experience_level=='Mid' %}selected{% endif %}>Mid</option>
+                <option value="Senior" {% if filters.experience_level=='Senior' %}selected{% endif %}>Senior</option>
+            </select>
 
-    <!-- RESUME PREVIEW BOX -->
-    <div class="resume-box">
-      {% if resumes %}
-      <iframe 
-        id="resume-viewer"
-        src="{{ url_for('static', filename='pdf/' + resumes[0].filename) }}" 
-        class="resume-viewer">
-      </iframe>
-      {% else %}
-      <div class="resume-placeholder">
-        No resumes found
-      </div>
-      {% endif %}
+            <input type="text" name="location" placeholder="Location" value="{{ filters.location }}">
+
+            <button type="submit">Search</button>
+        </form>
     </div>
 
-    <!-- RESUME DETAILS BOX -->
-    <div class="details-box">
-      <h6>Resume Details</h6>
-      <div id="details-display" class="details-slide"></div>
+    <div class="resume-and-details">
+        <!-- LEFT BUTTON -->
+        <button class="arrow-btn secondary outline" id="prev-btn">&lt;</button>
+
+        <!-- RESUME PREVIEW BOX -->
+        <div class="resume-box">
+            {% if resumes and resumes[0].get('filename') %}
+            <canvas id="resume-thumbnail" class="resume-thumbnail"></canvas>
+            {% elif resumes %}
+            <div class="resume-placeholder">
+                <h6>{{ resumes[0].get('title', 'Resume') }}</h6>
+                <p>{{ resumes[0].get('summary', 'No summary available') }}</p>
+            </div>
+            {% else %}
+            <div class="resume-placeholder">
+                No resumes found
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- RESUME DETAILS BOX -->
+        <div class="details-box">
+            <h6>Resume Details</h6>
+            <div id="details-display" class="details-slide"></div>
+        </div>
+
+        <!-- RIGHT BUTTON -->
+        <button class="arrow-btn secondary outline" id="next-btn">&gt;</button>
     </div>
 
-    <!-- RIGHT BUTTON -->
-    <button class="arrow-btn secondary outline" id="next-btn">&gt;</button>
-  </div>
+    <!-- PAGINATION -->
+    <div class="pagination">
+        {% if page > 1 %}
+        <a
+            href="{{ url_for('feed.feed_home', q=query, experience_level=filters.experience_level, location=filters.location, page=page-1) }}">Previous</a>
+        {% endif %}
 
-  <!-- PAGINATION -->
-  <div class="pagination">
-    {% if page > 1 %}
-    <a href="{{ url_for('feed.feed_home', q=query, experience_level=filters.experience_level, location=filters.location, page=page-1) }}">Previous</a>
-    {% endif %}
-    
-    <span>Page {{ page }} of {{ (total // per_page) + 1 }}</span>
-    
-    {% if page * per_page < total %}
-    <a href="{{ url_for('feed.feed_home', q=query, experience_level=filters.experience_level, location=filters.location, page=page+1) }}">Next</a>
-    {% endif %}
-  </div>
+        <span>Page {{ page }} of {{ (total // per_page) + 1 if total > 0 else 1 }}</span>
+
+        {% if page * per_page < total %} <a
+            href="{{ url_for('feed.feed_home', q=query, experience_level=filters.experience_level, location=filters.location, page=page+1) }}">
+            Next</a>
+            {% endif %}
+    </div>
 </article>
 
 <script>
-  window.feedResumes = {{ resumes | tojson }};
+    window.feedResumes = {{ resumes | tojson }};
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="{{ url_for('static', filename='js/feed.js') }}"></script>
 {% endblock %}

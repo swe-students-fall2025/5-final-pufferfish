@@ -50,7 +50,8 @@ def feed_home():
             "summary": r.get("summary", ""),
             "skills": r.get("skills", ""),
             "experience_level": r.get("experience_level", ""),
-            "location": r.get("location", "")
+            "location": r.get("location", ""),
+            "filename": r.get("filename", "")
         })
     
     # Get total count for pagination
