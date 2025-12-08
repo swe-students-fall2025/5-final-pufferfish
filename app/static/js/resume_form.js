@@ -1,5 +1,3 @@
-// Resume form dynamic functionality
-
 let educationCount = 1;
 let experienceCount = 1;
 let skillsCount = 1;

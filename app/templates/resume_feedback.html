@@ -1,0 +1,716 @@
+{% extends "layout.html" %} {% block title %}{{ page_title }}{% endblock %} {% block extra_css %}
+<link rel="stylesheet" type="text/css"
+    href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css" />
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/resume_viewer.css') }}" />
+{% endblock %} {% block main %}
+<div id="main-container">
+    <div id="content-wrapper">
+        <div id="viewer"></div>
+    </div>
+    <aside id="comments-sidebar">
+        <h3>Comments</h3>
+        <div id="comments-list"></div>
+    </aside>
+</div>
+
+<!-- Popup form for highlight confirmation -->
+<div id="highlight-popup">
+    <article>
+        <div class="comment-input-group">
+            <textarea id="popup-comment-input" placeholder="Add comment..." required></textarea>
+        </div>
+        <footer>
+            <button class="secondary" id="popup-cancel-btn">Cancel</button>
+            <button id="popup-save-btn">Save</button>
+        </footer>
+    </article>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="{{ url_for('static', filename='js/resume_viewer_core.js') }}"></script>
+<script>
+    const documentId = {{ document_id | tojson }};
+    const pdfUrl = {{ pdf_url | tojson }};
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    // CONSTANTS
+    const PDF_SCALE = 1.5; // Scale factor for PDF rendering
+
+    let pdfDocument = null;
+    let viewerApi = null;
+    let highlights = {};
+    let currentTemporaryHighlight = null; // Preview highlight shown before user confirms save/cancel
+    let currentHighlightData = null;
+
+    async function loadHighlights() {
+        try {
+            const response = await fetch(
+                `/api/highlights?documentId=${encodeURIComponent(documentId)}`
+            );
+            if (response.ok) {
+                return await response.json();
+            }
+            console.warn("Failed to load highlights:", response.statusText);
+            return {};
+        } catch (e) {
+            console.warn("Failed to load highlights:", e);
+            return {};
+        }
+    }
+
+    async function saveHighlights() {
+        const response = await fetch("/api/highlights", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                documentId: documentId,
+                highlights: highlights,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(
+                `Failed to save highlights: ${response.status} ${response.statusText}`
+            );
+        }
+
+        return await response.json();
+    }
+
+    function generateHighlightId() {
+        return "hl_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+    }
+
+    /**
+     * Extracts bounding boxes for selected text spans using Range.getClientRects().
+     * getClientRects() automatically accounts for CSS transforms that PDF.js applies.
+     */
+    function getSelectedTextSpans(selection, highlightLayer) {
+        if (selection.rangeCount === 0) {
+            return [];
+        }
+
+        const range = selection.getRangeAt(0);
+        const highlightLayerRect = highlightLayer.getBoundingClientRect();
+        const spans = [];
+
+        const clientRects = range.getClientRects();
+
+        for (let i = 0; i < clientRects.length; i++) {
+            const rect = clientRects[i];
+
+            const relativeRect = {
+                left: rect.left - highlightLayerRect.left,
+                top: rect.top - highlightLayerRect.top,
+                width: rect.width,
+                height: rect.height,
+            };
+
+            if (relativeRect.width > 0 && relativeRect.height > 0) {
+                spans.push(relativeRect);
+            }
+        }
+
+        return spans;
+    }
+
+    function createHighlightRect(bounds, isTemporary = false, highlightId = null) {
+        const rect = document.createElement("div");
+        rect.className = "highlight-rect" + (isTemporary ? " temporary" : "");
+        rect.style.left = bounds.left + "px";
+        rect.style.top = bounds.top + "px";
+        rect.style.width = bounds.width + "px";
+        rect.style.height = bounds.height + "px";
+
+        if (highlightId) {
+            rect.setAttribute("data-highlight-id", highlightId);
+            rect.style.cursor = "pointer";
+            rect.addEventListener("click", (e) => {
+                e.stopPropagation();
+                selectCommentById(highlightId);
+            });
+        }
+
+        return rect;
+    }
+
+    /**
+     * Renders highlights for a page. Handles both saved highlights (from localStorage) and temporary
+     * highlights (preview before save/cancel). The includeTemporary flag allows us to show the preview
+     * while keeping saved highlights visible, then remove it after the user decides to save or cancel.
+     *
+     * Coordinates are stored in PDF space (bottom-left origin) but must be converted to viewport space
+     * (top-left origin) for rendering.
+     */
+    function renderHighlights(
+        pageNum,
+        viewport,
+        highlightLayer,
+        includeTemporary = false
+    ) {
+        // When including temporary, only remove permanent highlights to avoid flicker
+        if (!includeTemporary || !currentTemporaryHighlight) {
+            highlightLayer.innerHTML = "";
+        } else {
+            const allRects = highlightLayer.querySelectorAll(".highlight-rect");
+            allRects.forEach((rect) => {
+                if (!rect.classList.contains("temporary")) {
+                    rect.remove();
+                }
+            });
+        }
+
+        const pageKey = pageNum.toString();
+
+        if (highlights[pageKey] && highlights[pageKey].length > 0) {
+            highlights[pageKey].forEach((highlight) => {
+                if (highlight.rects && highlight.rects.length > 0) {
+                    highlight.rects.forEach((rectData) => {
+                        const startPdf = [rectData.x, rectData.y];
+                        const endPdf = [
+                            rectData.x + rectData.width,
+                            rectData.y - rectData.height,
+                        ];
+
+                        const startViewport = viewport.convertToViewportPoint(
+                            startPdf[0],
+                            startPdf[1]
+                        );
+                        const endViewport = viewport.convertToViewportPoint(
+                            endPdf[0],
+                            endPdf[1]
+                        );
+
+                        const bounds = {
+                            left: Math.min(startViewport[0], endViewport[0]),
+                            top: Math.min(startViewport[1], endViewport[1]),
+                            width: Math.abs(endViewport[0] - startViewport[0]),
+                            height: Math.abs(endViewport[1] - startViewport[1]),
+                        };
+
+                        const rect = createHighlightRect(bounds, false, highlight.id);
+                        highlightLayer.appendChild(rect);
+                    });
+                }
+            });
+        }
+
+        if (includeTemporary && currentTemporaryHighlight) {
+            currentTemporaryHighlight.rects.forEach((rectData) => {
+                const startPdf = [rectData.x, rectData.y];
+                const endPdf = [
+                    rectData.x + rectData.width,
+                    rectData.y - rectData.height,
+                ];
+
+                const startViewport = viewport.convertToViewportPoint(
+                    startPdf[0],
+                    startPdf[1]
+                );
+                const endViewport = viewport.convertToViewportPoint(endPdf[0], endPdf[1]);
+
+                const bounds = {
+                    left: Math.min(startViewport[0], endViewport[0]),
+                    top: Math.min(startViewport[1], endViewport[1]),
+                    width: Math.abs(endViewport[0] - startViewport[0]),
+                    height: Math.abs(endViewport[1] - startViewport[1]),
+                };
+
+                const rect = createHighlightRect(bounds, true);
+                highlightLayer.appendChild(rect);
+            });
+        }
+    }
+
+    /**
+     * Shows the confirmation popup when text is selected. Buttons are cloned to remove old event
+     * listeners and prevent duplicate handlers. The delay on click-outside handler prevents immediate
+     * dismissal when the popup first appears (since the mouseup event that triggered selection would
+     * also trigger click-outside).
+     */
+    function showHighlightPopup(selectedText, pageNum, viewport, highlightLayer) {
+        const popup = document.getElementById("highlight-popup");
+        const commentInput = document.getElementById("popup-comment-input");
+        const saveBtn = document.getElementById("popup-save-btn");
+        const cancelBtn = document.getElementById("popup-cancel-btn");
+
+        commentInput.value = "";
+        commentInput.classList.remove("error");
+
+        popup.classList.add("visible");
+
+        // Focus on comment input for better UX
+        setTimeout(() => {
+            commentInput.focus();
+        }, 100);
+
+        // Clone buttons to remove old event listeners (prevents duplicate handlers)
+        const newSaveBtn = saveBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+        // Function to validate and update save button state
+        const updateSaveButtonState = () => {
+            const commentValue = commentInput.value.trim();
+            const isValid = commentValue.length > 0;
+            newSaveBtn.disabled = !isValid;
+            if (isValid) {
+                newSaveBtn.classList.remove("disabled");
+            } else {
+                newSaveBtn.classList.add("disabled");
+            }
+        };
+
+        // Initially disable save button
+        newSaveBtn.disabled = true;
+        newSaveBtn.classList.add("disabled");
+
+        // Validate on input
+        commentInput.addEventListener("input", updateSaveButtonState);
+
+        const saveHandler = async () => {
+            const commentValue = commentInput.value.trim();
+            if (commentValue.length === 0) {
+                commentInput.focus();
+                commentInput.classList.add("error");
+                return;
+            }
+            commentInput.classList.remove("error");
+            if (currentTemporaryHighlight) {
+                currentTemporaryHighlight.comment = commentValue;
+            }
+
+            newSaveBtn.disabled = true;
+            newSaveBtn.classList.add("disabled");
+            newSaveBtn.textContent = "Saving...";
+
+            try {
+                await saveHighlight(pageNum, viewport, highlightLayer);
+                hideHighlightPopup();
+            } catch (err) {
+                // Error already handled in saveHighlight, just reset button state
+                newSaveBtn.disabled = false;
+                newSaveBtn.classList.remove("disabled");
+                newSaveBtn.textContent = "Save";
+            }
+        };
+
+        newSaveBtn.addEventListener("click", saveHandler);
+
+        // Allow Ctrl+Enter or Cmd+Enter to save
+        commentInput.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                e.preventDefault();
+                saveHandler();
+            }
+        });
+
+        newCancelBtn.addEventListener("click", () => {
+            cancelHighlight(pageNum, viewport, highlightLayer);
+            hideHighlightPopup();
+        });
+
+        const clickOutsideHandler = (e) => {
+            if (!popup.contains(e.target) && popup.classList.contains("visible")) {
+                cancelHighlight(pageNum, viewport, highlightLayer);
+                hideHighlightPopup();
+                document.removeEventListener("click", clickOutsideHandler);
+            }
+        };
+
+        // Delay prevents immediate trigger from the mouseup that created the selection
+        setTimeout(() => {
+            document.addEventListener("click", clickOutsideHandler);
+        }, 100);
+
+        const escKeyHandler = (e) => {
+            if (e.key === "Escape" && popup.classList.contains("visible")) {
+                cancelHighlight(pageNum, viewport, highlightLayer);
+                hideHighlightPopup();
+                document.removeEventListener("keydown", escKeyHandler);
+            }
+        };
+
+        document.addEventListener("keydown", escKeyHandler);
+    }
+
+    function hideHighlightPopup() {
+        const popup = document.getElementById("highlight-popup");
+        const commentInput = document.getElementById("popup-comment-input");
+        const saveBtn = document.getElementById("popup-save-btn");
+        popup.classList.remove("visible");
+        commentInput.value = "";
+        commentInput.classList.remove("error");
+        saveBtn.disabled = false;
+        saveBtn.classList.remove("disabled");
+        saveBtn.textContent = "Save"; // Reset button text
+        currentHighlightData = null;
+    }
+
+    /**
+     * Persists the temporary highlight to MongoDB and re-renders without the temporary flag,
+     * making it a permanent highlight.
+     */
+    async function saveHighlight(pageNum, viewport, highlightLayer) {
+        if (!currentTemporaryHighlight) {
+            return;
+        }
+
+        const pageKey = pageNum.toString();
+        if (!highlights[pageKey]) {
+            highlights[pageKey] = [];
+        }
+        highlights[pageKey].push(currentTemporaryHighlight);
+
+        try {
+            await saveHighlights();
+            currentTemporaryHighlight = null;
+            renderHighlights(pageNum, viewport, highlightLayer, false);
+            renderComments();
+        } catch (err) {
+            // Revert the change if save failed
+            highlights[pageKey].pop();
+            if (highlights[pageKey].length === 0) {
+                delete highlights[pageKey];
+            }
+            alert("Failed to save highlight. Please try again.");
+            console.error("Error saving highlight:", err);
+        }
+    }
+
+    /**
+     * Discards the temporary highlight and re-renders to remove it from view.
+     */
+    function cancelHighlight(pageNum, viewport, highlightLayer) {
+        currentTemporaryHighlight = null;
+        renderHighlights(pageNum, viewport, highlightLayer, false);
+    }
+
+    /**
+     * Creates a temporary highlight from the current text selection and shows the confirmation popup.
+     * Coordinates are converted from viewport space (where selection happens) to PDF space (for storage)
+     * because PDF coordinates are scale-independent and will work correctly if the user zooms or the
+     * viewport changes.
+     */
+    function addHighlight(pageNum, viewport, textLayer, highlightLayer) {
+        const selection = window.getSelection();
+        if (selection.rangeCount === 0 || selection.toString().trim() === "") {
+            return;
+        }
+
+        const selectedText = selection.toString().trim();
+        if (selectedText === "") {
+            return;
+        }
+
+        const selectedSpans = getSelectedTextSpans(selection, highlightLayer);
+        if (selectedSpans.length === 0) {
+            return;
+        }
+
+        // Convert viewport coordinates to PDF coordinates for scale-independent storage
+        const rects = selectedSpans.map((spanRect) => {
+            const topLeftPdf = viewport.convertToPdfPoint(spanRect.left, spanRect.top);
+            const bottomRightPdf = viewport.convertToPdfPoint(
+                spanRect.left + spanRect.width,
+                spanRect.top + spanRect.height
+            );
+
+            return {
+                x: Math.min(topLeftPdf[0], bottomRightPdf[0]),
+                y: Math.max(topLeftPdf[1], bottomRightPdf[1]), // PDF Y-axis is bottom-up
+                width: Math.abs(bottomRightPdf[0] - topLeftPdf[0]),
+                height: Math.abs(topLeftPdf[1] - bottomRightPdf[1]),
+            };
+        });
+
+        currentTemporaryHighlight = {
+            id: generateHighlightId(),
+            rects: rects,
+            text: selectedText,
+            comment: "",
+        };
+
+        currentHighlightData = {
+            pageNum: pageNum,
+            viewport: viewport,
+            highlightLayer: highlightLayer,
+        };
+
+        renderHighlights(pageNum, viewport, highlightLayer, true);
+        showHighlightPopup(selectedText, pageNum, viewport, highlightLayer);
+        selection.removeAllRanges();
+    }
+
+    async function render() {
+        highlights = await loadHighlights();
+
+        viewerApi = createResumeViewer({
+            pdfUrl,
+            scale: PDF_SCALE,
+            renderHighlightsForPage: (pageNum, viewport, highlightLayer) =>
+                renderHighlights(pageNum, viewport, highlightLayer, false),
+            onTextSelection: (pageNum, viewport, textLayer, highlightLayer) =>
+                addHighlight(pageNum, viewport, textLayer, highlightLayer),
+        });
+
+        await viewerApi.render();
+        pdfDocument = viewerApi.getDocument();
+        renderComments();
+    }
+
+    function renderComments() {
+        const commentsList = document.getElementById("comments-list");
+        commentsList.innerHTML = "";
+
+        // Collect all highlights with comments from all pages
+        const allComments = [];
+        Object.keys(highlights).forEach((pageKey) => {
+            const pageHighlights = highlights[pageKey];
+            if (Array.isArray(pageHighlights)) {
+                pageHighlights.forEach((highlight, index) => {
+                    // Only show highlights that have comments
+                    if (highlight && highlight.comment && highlight.comment.trim() !== "") {
+                        allComments.push({
+                            pageNum: parseInt(pageKey),
+                            highlightIndex: index,
+                            highlight: highlight,
+                        });
+                    }
+                });
+            }
+        });
+
+        // Sort comments by document position: page, then y (top to bottom), then x (left to right)
+        allComments.sort((a, b) => {
+            // Validate rects exist and are non-empty
+            if (
+                !a.highlight.rects ||
+                a.highlight.rects.length === 0 ||
+                !b.highlight.rects ||
+                b.highlight.rects.length === 0
+            ) {
+                return 0;
+            }
+
+            const aTopRect = a.highlight.rects[0];
+            const bTopRect = b.highlight.rects[0];
+
+            if (a.pageNum !== b.pageNum) {
+                return a.pageNum - b.pageNum;
+            }
+
+            const yDiff = bTopRect.y - aTopRect.y;
+            if (Math.abs(yDiff) < 5) {
+                return aTopRect.x - bTopRect.x;
+            }
+
+            return yDiff;
+        });
+
+        if (allComments.length === 0) {
+            return;
+        }
+
+        allComments.forEach(({ pageNum, highlightIndex, highlight }) => {
+            const commentItem = document.createElement("div");
+            commentItem.className = "comment-item";
+            commentItem.setAttribute("data-page", pageNum);
+            commentItem.setAttribute("data-index", highlightIndex);
+            commentItem.setAttribute("data-highlight-id", highlight.id);
+
+            const commentText = document.createElement("div");
+            commentText.className = "comment-text";
+            commentText.textContent = highlight.comment;
+            commentItem.appendChild(commentText);
+
+            const commentMeta = document.createElement("div");
+            commentMeta.className = "comment-meta";
+
+            const editBtn = document.createElement("button");
+            editBtn.className = "comment-edit";
+            editBtn.textContent = "Edit";
+            editBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                selectComment(commentItem, highlight.id);
+                editComment(commentItem, pageNum, highlightIndex, highlight.comment);
+            });
+            commentMeta.appendChild(editBtn);
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "comment-delete";
+            deleteBtn.textContent = "Delete";
+            deleteBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                deleteComment(pageNum, highlightIndex);
+            });
+            commentMeta.appendChild(deleteBtn);
+
+            commentItem.appendChild(commentMeta);
+
+            commentItem.addEventListener("click", () => {
+                selectComment(commentItem, highlight.id);
+            });
+
+            commentsList.appendChild(commentItem);
+        });
+    }
+
+    async function deleteComment(pageNum, highlightIndex) {
+        const pageKey = pageNum.toString();
+        if (highlights[pageKey] && highlights[pageKey][highlightIndex]) {
+            const deletedHighlight = highlights[pageKey][highlightIndex];
+            highlights[pageKey].splice(highlightIndex, 1);
+            if (highlights[pageKey].length === 0) {
+                delete highlights[pageKey];
+            }
+
+            try {
+                await saveHighlights();
+                renderComments();
+
+                const pageContainers = document.querySelectorAll(".page-container");
+                pageContainers.forEach((container, index) => {
+                    if (index + 1 === pageNum) {
+                        const highlightLayer = container.querySelector(".highlight-layer");
+                        if (highlightLayer && pdfDocument) {
+                            pdfDocument
+                                .getPage(pageNum)
+                                .then((page) => {
+                                    const viewport = page.getViewport({ scale: PDF_SCALE });
+                                    renderHighlights(pageNum, viewport, highlightLayer, false);
+                                })
+                                .catch((err) => {
+                                    console.warn("Error re-rendering highlights:", err);
+                                });
+                        }
+                    }
+                });
+            } catch (err) {
+                // Revert the deletion if save failed
+                if (!highlights[pageKey]) {
+                    highlights[pageKey] = [];
+                }
+                highlights[pageKey].splice(highlightIndex, 0, deletedHighlight);
+                renderComments();
+                alert("Failed to delete comment. Please try again.");
+                console.error("Error deleting comment:", err);
+            }
+        }
+    }
+
+    function editComment(commentItem, pageNum, highlightIndex, currentComment) {
+        const commentText = commentItem.querySelector(".comment-text");
+        const commentMeta = commentItem.querySelector(".comment-meta");
+
+        const textarea = document.createElement("textarea");
+        textarea.className = "comment-edit-input";
+        textarea.value = currentComment;
+
+        commentText.replaceWith(textarea);
+        textarea.focus();
+
+        commentMeta.style.display = "none";
+
+        const editActions = document.createElement("div");
+        editActions.className = "comment-edit-actions";
+
+        const saveEditBtn = document.createElement("button");
+        saveEditBtn.className = "comment-save-edit";
+        saveEditBtn.textContent = "Save";
+        saveEditBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            const newComment = textarea.value.trim();
+            if (newComment.length > 0) {
+                const pageKey = pageNum.toString();
+                const oldComment = highlights[pageKey][highlightIndex].comment;
+                highlights[pageKey][highlightIndex].comment = newComment;
+
+                saveEditBtn.disabled = true;
+                saveEditBtn.textContent = "Saving...";
+
+                try {
+                    await saveHighlights();
+                    renderComments();
+                } catch (err) {
+                    // Revert the change if save failed
+                    highlights[pageKey][highlightIndex].comment = oldComment;
+                    alert("Failed to save comment. Please try again.");
+                    console.error("Error saving comment:", err);
+                    saveEditBtn.disabled = false;
+                    saveEditBtn.textContent = "Save";
+                }
+            } else {
+                // Show error if comment is empty
+                textarea.focus();
+                textarea.style.borderColor = "red";
+            }
+        });
+
+        const cancelEditBtn = document.createElement("button");
+        cancelEditBtn.className = "comment-cancel-edit";
+        cancelEditBtn.textContent = "Cancel";
+        cancelEditBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            renderComments();
+        });
+
+        editActions.appendChild(cancelEditBtn);
+        editActions.appendChild(saveEditBtn);
+        commentItem.appendChild(editActions);
+    }
+
+    /**
+     * Selects a comment and highlights its corresponding yellow boxes.
+     */
+    function selectComment(commentElement, highlightId) {
+        const commentsList = document.getElementById("comments-list");
+        const allComments = commentsList.querySelectorAll(".comment-item");
+
+        allComments.forEach((item) => item.classList.remove("selected"));
+        commentElement.classList.add("selected");
+        highlightYellowBoxes(highlightId);
+    }
+
+    /**
+     * Selects a comment in the sidebar by its highlight ID and scrolls it into view.
+     */
+    function selectCommentById(highlightId) {
+        const commentsList = document.getElementById("comments-list");
+        const allComments = commentsList.querySelectorAll(".comment-item");
+
+        allComments.forEach((item) => item.classList.remove("selected"));
+
+        allComments.forEach((item) => {
+            if (item.getAttribute("data-highlight-id") === highlightId) {
+                item.classList.add("selected");
+                item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
+        });
+
+        highlightYellowBoxes(highlightId);
+    }
+
+    /**
+     * Highlights yellow boxes matching the given highlight ID.
+     */
+    function highlightYellowBoxes(highlightId) {
+        const allHighlightRects = document.querySelectorAll(".highlight-rect");
+
+        allHighlightRects.forEach((rect) => rect.classList.remove("active"));
+
+        allHighlightRects.forEach((rect) => {
+            if (rect.getAttribute("data-highlight-id") === highlightId) {
+                rect.classList.add("active");
+            }
+        });
+    }
+
+    render();
+</script>
+{% endblock %}

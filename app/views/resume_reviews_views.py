@@ -25,16 +25,15 @@ def resume_reviews_home():
             error="No resumes found",
             reviews=[],
             user_resumes=[],
-            current_resume_index=0,
             resume_path=""
         )
     
-    # Get selected resume index from query parameter, default to 0
-    resume_index = int(request.args.get('resume_index', 0))
-    if resume_index < 0 or resume_index >= len(user_resumes):
-        resume_index = 0
-    
-    current_resume = user_resumes[resume_index]
+    # Prefer a specific resume_id param, otherwise use the user's current pointer, otherwise first
+    selected_resume_id = request.args.get("resume_id") or getattr(current_user, "current_resume_id", None)
+    current_resume = next(
+        (resume for resume in user_resumes if resume.get("_id") == selected_resume_id),
+        user_resumes[0],
+    )
     resume_id = current_resume["_id"]
     resume_path = current_resume["resume_path"]
     
@@ -44,8 +43,9 @@ def resume_reviews_home():
     return render_template(
         "resume_reviews.html",
         user=current_user,
+        resume_id=resume_id,
         resume_path=resume_path,
         reviews=reviews,
         user_resumes=user_resumes,
-        current_resume_index=resume_index
+        current_resume_id=resume_id,
     )
