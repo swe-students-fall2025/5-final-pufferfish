@@ -31,19 +31,19 @@
         </form>
     </div>
 
-    <div class="resume-and-details">
-        <!-- LEFT BUTTON -->
-        <button class="arrow-btn secondary outline" id="prev-btn">&lt;</button>
-
-        <!-- RESUME PREVIEW BOX -->
-        <div class="resume-box">
-            {% if resumes and resumes[0].get('filename') %}
-            <canvas id="resume-thumbnail" class="resume-thumbnail"></canvas>
-            {% elif resumes %}
-            <div class="resume-placeholder">
-                <h6>{{ resumes[0].get('title', 'Resume') }}</h6>
-                <p>{{ resumes[0].get('summary', 'No summary available') }}</p>
+    <div class="feed-content">
+        <!-- THUMBNAILS GRID -->
+        <div class="thumbnails-grid">
+            {% if resumes %}
+            {% for resume in resumes %}
+            <div class="thumbnail-card" data-index="{{ loop.index0 }}">
+                <canvas id="thumbnail-{{ loop.index0 }}" class="thumbnail-canvas"></canvas>
+                <div class="thumbnail-info">
+                    <h6>{{ resume.get('title', 'Untitled') }}</h6>
+                    <small>{{ resume.get('experience_level', '') }}</small>
+                </div>
             </div>
+            {% endfor %}
             {% else %}
             <div class="resume-placeholder">
                 No resumes found
@@ -54,11 +54,10 @@
         <!-- RESUME DETAILS BOX -->
         <div class="details-box">
             <h6>Resume Details</h6>
-            <div id="details-display" class="details-slide"></div>
+            <div id="details-display" class="details-slide">
+                <p>Select a resume to view details</p>
+            </div>
         </div>
-
-        <!-- RIGHT BUTTON -->
-        <button class="arrow-btn secondary outline" id="next-btn">&gt;</button>
     </div>
 
     <!-- PAGINATION -->

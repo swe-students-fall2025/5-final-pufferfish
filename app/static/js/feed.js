@@ -8,7 +8,7 @@ async function generateThumbnail(pdfUrl, canvas) {
         const pdf = await loadingTask.promise;
         const page = await pdf.getPage(1);
 
-        const scale = 1.5;
+        const scale = 0.9; // Smaller scale for thumbnails
         const viewport = page.getViewport({ scale });
 
         const context = canvas.getContext('2d');
@@ -24,17 +24,16 @@ async function generateThumbnail(pdfUrl, canvas) {
     }
 }
 
-function updateResume(index) {
+function updateDetails(index) {
     if (!window.feedResumes || window.feedResumes.length === 0) return;
 
     const resume = window.feedResumes[index];
-    const canvas = document.getElementById('resume-thumbnail');
     const detailsDisplay = document.getElementById('details-display');
 
-    if (canvas && resume._id) {
-        const pdfUrl = `/resume/${resume._id}/pdf`;
-        generateThumbnail(pdfUrl, canvas);
-    }
+    // Highlight selected thumbnail
+    document.querySelectorAll('.thumbnail-card').forEach((card, i) => {
+        card.classList.toggle('selected', i === index);
+    });
 
     if (detailsDisplay) {
         detailsDisplay.innerHTML = `
@@ -43,33 +42,31 @@ function updateResume(index) {
             <p><strong>Skills:</strong> ${resume.skills || 'N/A'}</p>
             <p><strong>Experience:</strong> ${resume.experience_level || 'N/A'}</p>
             <p><strong>Location:</strong> ${resume.location || 'N/A'}</p>
+            <a href="/resume/feedback/${resume._id}" class="view-resume-btn">View Full Resume</a>
         `;
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-
     if (window.feedResumes && window.feedResumes.length > 0) {
-        updateResume(0);
-    }
-
-    if (prevBtn) {
-        prevBtn.addEventListener('click', () => {
-            if (currentIndex > 0) {
-                currentIndex--;
-                updateResume(currentIndex);
+        // Generate all thumbnails
+        window.feedResumes.forEach((resume, index) => {
+            const canvas = document.getElementById(`thumbnail-${index}`);
+            if (canvas && resume._id) {
+                const pdfUrl = `/resume/${resume._id}/pdf`;
+                generateThumbnail(pdfUrl, canvas);
             }
         });
-    }
 
-    if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
-            if (currentIndex < window.feedResumes.length - 1) {
-                currentIndex++;
-                updateResume(currentIndex);
-            }
+        // Add click handlers to thumbnail cards
+        document.querySelectorAll('.thumbnail-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const index = parseInt(card.dataset.index);
+                updateDetails(index);
+            });
         });
+
+        // Show first resume details
+        updateDetails(0);
     }
 });
