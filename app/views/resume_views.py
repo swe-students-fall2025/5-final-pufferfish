@@ -55,7 +55,13 @@ def save_highlights():
     if not document_id or highlights is None:
         return jsonify({"error": "Missing required fields"}), 400
 
-    ResumeService.save_highlights(document_id, highlights)
+    reviewer_id = None
+    reviewer_name = "Anonymous"
+    if current_user.is_authenticated:
+        reviewer_id = str(current_user.id)
+        reviewer_name = f"{current_user.first_name} {current_user.last_name}"
+
+    ResumeService.save_highlights(document_id, highlights, reviewer_id, reviewer_name)
     return jsonify({"status": "success"}), 200
 
 

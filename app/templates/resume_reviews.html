@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+
+{% block title %}My Resume Reviews - Pufferfish{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_reviews.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_viewer.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Resume Selector -->
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+    <label for="resume-selector" style="font-weight: bold;">Select Resume:</label>
+    <select id="resume-selector" class="form-control" style="max-width: 300px;">
+      {% for resume in user_resumes %}
+      <option value="{{ loop.index0 }}" {% if loop.index0==current_resume_index %}selected{% endif %}>
+        {{ resume.title }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
+<div class="resume-viewer-container">
+
+  <!-- Column 1: Previous Button -->
+  <div class="nav-col">
+    <button id="prev-btn" class="nav-btn secondary outline" disabled>&lt;</button>
+  </div>
+
+  <!-- Column 2: PDF Viewer -->
+  <main id="pdf-viewer">
+    <div id="viewer" class="pdfViewer"></div>
+  </main>
+
+  <!-- Column 3: Comments Sidebar -->
+  <aside id="comments-sidebar">
+    <div class="reviewer-header">
+      <small>Reviewer</small>
+      <h5 id="reviewer-name" style="margin:0;">Loading...</h5>
+    </div>
+
+    <h6>Comments</h6>
+    <div id="comments-list"></div>
+  </aside>
+
+  <!-- Column 4: Next Button -->
+  <div class="nav-col">
+    <button id="next-btn" class="nav-btn secondary outline" disabled>&gt;</button>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  window.RESUME_CONFIG = {
+    documentId: "{{ resume_path }}",
+    reviews: {{ reviews | tojson }}
+  };
+
+  // Handle resume selection change
+  document.addEventListener('DOMContentLoaded', function () {
+    const resumeSelector = document.getElementById('resume-selector');
+    if (resumeSelector) {
+      resumeSelector.addEventListener('change', function () {
+        const selectedIndex = this.value;
+        window.location.href = '/resume-reviews?resume_index=' + selectedIndex;
+      });
+    }
+  });
+</script>
+<script src="{{ url_for('static', filename='js/resume_reviews.js') }}"></script>
+{% endblock %}
