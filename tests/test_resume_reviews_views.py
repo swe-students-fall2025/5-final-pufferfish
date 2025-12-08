@@ -86,8 +86,8 @@ class TestResumeReviewsRoute:
         assert response.status_code == 200
         assert b'First Resume' in response.data or b'resume1.pdf' in response.data
     
-    def test_resume_reviews_respects_resume_index_parameter(self, client):
-        """Test that resume_index query parameter selects the correct resume."""
+    def test_resume_reviews_respects_resume_id_parameter(self, client):
+        """Test that resume_id query parameter selects the correct resume."""
         user_id = create_test_user(client)
         
         # add resumes
@@ -108,13 +108,13 @@ class TestResumeReviewsRoute:
             }
         ])
         
-        # request second resume (index 1)
-        response = client.get('/resume-reviews?resume_index=1')
+        # request second resume by id
+        response = client.get('/resume-reviews?resume_id=resume_2')
         assert response.status_code == 200
         assert b'Second Resume' in response.data or b'resume2.pdf' in response.data
     
-    def test_resume_reviews_handles_invalid_resume_index(self, client):
-        """Test that invalid resume_index defaults to 0."""
+    def test_resume_reviews_handles_invalid_resume_id(self, client):
+        """Test that invalid resume_id defaults to first resume."""
         user_id = create_test_user(client)
         
         # add one resume
@@ -126,14 +126,8 @@ class TestResumeReviewsRoute:
             "created_at": "2024-01-15"
         })
         
-        # out-of-bounds index
-        response = client.get('/resume-reviews?resume_index=999')
-        assert response.status_code == 200
-        # should default to first resume
-        assert b'First Resume' in response.data or b'resume1.pdf' in response.data
-        
-        # negative index
-        response = client.get('/resume-reviews?resume_index=-1')
+        # invalid id
+        response = client.get('/resume-reviews?resume_id=does_not_exist')
         assert response.status_code == 200
         assert b'First Resume' in response.data or b'resume1.pdf' in response.data
     
