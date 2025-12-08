@@ -8,11 +8,21 @@
 {% endblock %}
 
 {% block main %}
-<!-- Resume Selector -->
+<!-- Page Header -->
 <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-    <label for="resume-selector" style="font-weight: bold;">Select Resume:</label>
-    <select id="resume-selector" class="form-control" style="max-width: 300px;">
+  <header style="margin-bottom: 1.5rem;">
+    <hgroup>
+      <h1 style="margin-bottom: 0.25rem;">My Resume Reviews</h1>
+      <p style="color: var(--pico-muted-color); margin: 0;">
+        See what others have to say about your resume
+      </p>
+    </hgroup>
+  </header>
+
+  <!-- Resume Selector -->
+  <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 20px;">
+    <label for="resume-selector" style="font-weight: bold; margin: 0; white-space: nowrap;">Select Resume:</label>
+    <select id="resume-selector" style="max-width: 300px; margin: 0;">
       {% for resume in user_resumes %}
       <option value="{{ resume._id }}" {% if resume._id==current_resume_id %}selected{% endif %}>
         {{ resume.title }}
