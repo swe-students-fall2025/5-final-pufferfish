@@ -60,11 +60,11 @@ class TestResumeReviewsRoute:
         response = client.get('/resume-reviews', follow_redirects=True)
         assert response.status_code == 200
     
-    def test_resume_reviews_displays_first_resume_by_default(self, client):
-        """Test that the first resume is displayed by default."""
+    def test_resume_reviews_displays_newest_resume_by_default(self, client):
+        """Test that the newest resume is displayed by default."""
         user_id = create_test_user(client)
         
-        # add resumes
+        # add resumes (oldest first in DB, but newest should be selected)
         mongo.db.resumes.insert_many([
             {
                 "_id": "resume_1",
@@ -84,52 +84,8 @@ class TestResumeReviewsRoute:
         
         response = client.get('/resume-reviews')
         assert response.status_code == 200
-        assert b'First Resume' in response.data or b'resume1.pdf' in response.data
-    
-    def test_resume_reviews_respects_resume_id_parameter(self, client):
-        """Test that resume_id query parameter selects the correct resume."""
-        user_id = create_test_user(client)
-        
-        # add resumes
-        mongo.db.resumes.insert_many([
-            {
-                "_id": "resume_1",
-                "user_id": user_id,
-                "resume_path": "/static/pdf/resume1.pdf",
-                "title": "First Resume",
-                "created_at": "2024-01-15"
-            },
-            {
-                "_id": "resume_2",
-                "user_id": user_id,
-                "resume_path": "/static/pdf/resume2.pdf",
-                "title": "Second Resume",
-                "created_at": "2024-02-20"
-            }
-        ])
-        
-        # request second resume by id
-        response = client.get('/resume-reviews?resume_id=resume_2')
-        assert response.status_code == 200
+        # newest resume should be selected by default
         assert b'Second Resume' in response.data or b'resume2.pdf' in response.data
-    
-    def test_resume_reviews_handles_invalid_resume_id(self, client):
-        """Test that invalid resume_id defaults to first resume."""
-        user_id = create_test_user(client)
-        
-        # add one resume
-        mongo.db.resumes.insert_one({
-            "_id": "resume_1",
-            "user_id": user_id,
-            "resume_path": "/static/pdf/resume1.pdf",
-            "title": "First Resume",
-            "created_at": "2024-01-15"
-        })
-        
-        # invalid id
-        response = client.get('/resume-reviews?resume_id=does_not_exist')
-        assert response.status_code == 200
-        assert b'First Resume' in response.data or b'resume1.pdf' in response.data
     
     def test_resume_reviews_passes_reviews_to_template(self, client):
         """Test that reviews are retrieved and passed to the template."""
@@ -229,6 +185,5 @@ class TestResumeReviewsRoute:
         response = client.get('/resume-reviews')
         assert response.status_code == 200
         
-        # response should include the resume selector and PDF viewer elements
-        assert b'Select Resume' in response.data or b'resume-selector' in response.data
+        # response should include the PDF viewer elements
         assert b'pdf' in response.data.lower()

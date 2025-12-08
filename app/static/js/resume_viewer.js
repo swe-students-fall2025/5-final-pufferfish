@@ -15,6 +15,7 @@
 (function () {
   function createResumeViewer({
     pdfUrl,
+    pdfData,
     scale = 1.5,
     containerId = "viewer",
     renderHighlightsForPage,
@@ -91,12 +92,15 @@
     }
 
     async function renderAll() {
-      pdfDocument = await pdfjsLib.getDocument({
-        url: pdfUrl,
-        cMapUrl:
-          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/",
-        cMapPacked: true,
-      }).promise;
+      const source = pdfData ? { data: pdfData } : { url: pdfUrl };
+      pdfDocument = await pdfjsLib
+        .getDocument({
+          ...source,
+          cMapUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/",
+          cMapPacked: true,
+        })
+        .promise;
 
       const viewer = document.getElementById(containerId);
       viewer.innerHTML = "";
