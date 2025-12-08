@@ -3,7 +3,7 @@
 [![CI](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/webapp-ci.yml/badge.svg)](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/webapp-ci.yml)
 [![CD](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/docker-cicd.yml/badge.svg)](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/docker-cicd.yml)
 
-An exercise to put to practice software development teamwork, subsystem communication, containers, deployment, and CI/CD pipelines. See [instructions](./instructions.md) for details.
+**Live Deployment:** https://pufferfish-24bfc.ondigitalocean.app/
 
 ## Introduction
 
@@ -12,7 +12,6 @@ An exercise to put to practice software development teamwork, subsystem communic
 Users can fill out a form with their personal information, education, work experience, skills, and projects. After completing the form, users can select from a variety of professional resume templates, and Pufferfish will generate a polished PDF resume ready for download. Additionally, users can upload their existing resume and use our templates to create multiple versions of their resume, allowing them to experiment with different formats and styles.
 
 **Note:** Our name "Pufferfish" comes from the fact that we're using Digital Ocean for hosting, and there are fishes in the ocean! 🐡
-
 
 ### Design & Wireframes
 
@@ -39,8 +38,6 @@ We have created comprehensive wireframes and design mockups in Figma to guide th
 - Xiaomin Liu ([xl4624](https://github.com/xl4624))
 
 ## Setup and Installation
-
-Deployment link: https://pufferfish-36n2u.ondigitalocean.app/ 
 
 ### Setup
 
@@ -90,8 +87,8 @@ The application will be available at `http://localhost:8000`
 
 The CI/CD pipeline should just reference these secrets configured in this GitHub repository's settings:
 
-| Secret | Description |
-|--------|-------------|
-| `DOCKERHUB_USERNAME` | Docker Hub username |
-| `DOCKERHUB_TOKEN` | Docker Hub personal access token |
-| `DIGITALOCEAN_ACCESS_TOKEN` | Digital Ocean API token |
+| Secret                      | Description                      |
+| --------------------------- | -------------------------------- |
+| `DOCKERHUB_USERNAME`        | Docker Hub username              |
+| `DOCKERHUB_TOKEN`           | Docker Hub personal access token |
+| `DIGITALOCEAN_ACCESS_TOKEN` | Digital Ocean API token          |
