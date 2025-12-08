@@ -252,6 +252,80 @@ class TestGetAllReviews:
             assert reviews[0]["reviewer_name"] == "Test Reviewer"
 
 
+class TestGetHighlights:
+    """Tests for ResumeService.get_highlights()"""
+
+    def test_get_highlights_returns_highlights_for_document(self, app, clean_db):
+        """Test retrieving highlights for a document."""
+        with app.app_context():
+            mongo.db.highlights.insert_one(
+                {
+                    "document_id": "resume_1",
+                    "reviewer_id": "reviewer_1",
+                    "highlights": {
+                        "1": [
+                            {
+                                "id": "hl_1",
+                                "comment": "Great section!",
+                                "text": "Experience",
+                                "rects": [{"x": 10, "y": 20, "width": 100, "height": 12}],
+                            }
+                        ]
+                    },
+                }
+            )
+
+            highlights = ResumeService.get_highlights("resume_1")
+
+            assert "1" in highlights
+            assert len(highlights["1"]) == 1
+            assert highlights["1"][0]["comment"] == "Great section!"
+
+    def test_get_highlights_with_reviewer_id(self, app, clean_db):
+        """Test retrieving highlights filtered by reviewer_id."""
+        with app.app_context():
+            # Insert highlights from two different reviewers
+            mongo.db.highlights.insert_many(
+                [
+                    {
+                        "document_id": "resume_1",
+                        "reviewer_id": "reviewer_1",
+                        "highlights": {"1": [{"id": "hl_1", "comment": "From reviewer 1"}]},
+                    },
+                    {
+                        "document_id": "resume_1",
+                        "reviewer_id": "reviewer_2",
+                        "highlights": {"1": [{"id": "hl_2", "comment": "From reviewer 2"}]},
+                    },
+                ]
+            )
+
+            # Get highlights for specific reviewer
+            highlights = ResumeService.get_highlights("resume_1", reviewer_id="reviewer_1")
+
+            assert highlights["1"][0]["comment"] == "From reviewer 1"
+
+    def test_get_highlights_returns_empty_for_nonexistent_document(self, app, clean_db):
+        """Test that empty dict is returned for document with no highlights."""
+        with app.app_context():
+            highlights = ResumeService.get_highlights("nonexistent_resume")
+            assert highlights == {}
+
+    def test_get_highlights_returns_empty_for_wrong_reviewer(self, app, clean_db):
+        """Test that empty dict is returned when reviewer has no highlights."""
+        with app.app_context():
+            mongo.db.highlights.insert_one(
+                {
+                    "document_id": "resume_1",
+                    "reviewer_id": "reviewer_1",
+                    "highlights": {"1": [{"id": "hl_1", "comment": "Test"}]},
+                }
+            )
+
+            highlights = ResumeService.get_highlights("resume_1", reviewer_id="other_reviewer")
+            assert highlights == {}
+
+
 class TestSaveHighlights:
     """Tests for ResumeService.save_highlights()"""
 
@@ -324,3 +398,90 @@ class TestSaveHighlights:
 
             assert updated["reviewer_name"] == "New Name"
             assert updated["highlights"]["1"][0]["comment"] == "Updated comment"
+
+    def test_save_highlights_without_reviewer_id(self, app, clean_db):
+        """Test saving highlights without a reviewer_id (anonymous)."""
+        with app.app_context():
+            highlights = {
+                "1": [{"id": "hl_1", "comment": "Anonymous comment", "text": "Test", "rects": []}]
+            }
+
+            ResumeService.save_highlights(
+                document_id="resume_1",
+                highlights=highlights,
+                reviewer_id=None,
+                reviewer_name="Anonymous",
+            )
+
+            saved = mongo.db.highlights.find_one({"document_id": "resume_1"})
+
+            assert saved is not None
+            assert saved["reviewer_name"] == "Anonymous"
+            assert saved.get("reviewer_id") is None
+
+    def test_save_highlights_multiple_pages(self, app, clean_db):
+        """Test saving highlights across multiple pages."""
+        with app.app_context():
+            highlights = {
+                "1": [{"id": "hl_1", "comment": "Page 1 comment", "text": "Text1", "rects": []}],
+                "2": [{"id": "hl_2", "comment": "Page 2 comment", "text": "Text2", "rects": []}],
+                "3": [
+                    {"id": "hl_3a", "comment": "Page 3 first", "text": "Text3a", "rects": []},
+                    {"id": "hl_3b", "comment": "Page 3 second", "text": "Text3b", "rects": []},
+                ],
+            }
+
+            ResumeService.save_highlights(
+                document_id="resume_1",
+                highlights=highlights,
+                reviewer_id="reviewer_1",
+                reviewer_name="Test",
+            )
+
+            saved = mongo.db.highlights.find_one({"document_id": "resume_1"})
+
+            assert len(saved["highlights"]) == 3
+            assert len(saved["highlights"]["3"]) == 2
+
+    def test_save_highlights_preserves_rect_coordinates(self, app, clean_db):
+        """Test that highlight rectangle coordinates are preserved correctly."""
+        with app.app_context():
+            rects = [
+                {"x": 72.5, "y": 150.25, "width": 200.75, "height": 14.5},
+                {"x": 72.5, "y": 165.0, "width": 180.0, "height": 14.5},
+            ]
+            highlights = {
+                "1": [{"id": "hl_1", "comment": "Multi-line", "text": "Long text", "rects": rects}]
+            }
+
+            ResumeService.save_highlights(
+                document_id="resume_1",
+                highlights=highlights,
+                reviewer_id="reviewer_1",
+            )
+
+            saved = mongo.db.highlights.find_one({"document_id": "resume_1"})
+            saved_rects = saved["highlights"]["1"][0]["rects"]
+
+            assert len(saved_rects) == 2
+            assert saved_rects[0]["x"] == 72.5
+            assert saved_rects[0]["y"] == 150.25
+            assert saved_rects[1]["width"] == 180.0
+
+
+class TestGetResumePdf:
+    """Tests for ResumeService.get_resume_pdf()"""
+
+    def test_get_resume_pdf_returns_none_for_invalid_id(self, app, clean_db):
+        """Test that invalid resume ID returns None."""
+        with app.app_context():
+            doc, file_obj = ResumeService.get_resume_pdf("invalid_id")
+            assert doc is None
+            assert file_obj is None
+
+    def test_get_resume_pdf_returns_none_for_nonexistent(self, app, clean_db):
+        """Test that nonexistent resume returns None."""
+        with app.app_context():
+            doc, file_obj = ResumeService.get_resume_pdf(str(ObjectId()))
+            assert doc is None
+            assert file_obj is None
