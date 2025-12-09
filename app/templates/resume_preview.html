@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block title %}Resume Preview - Puffer Fish{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_preview.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="preview-container">
+  <h1 class="page-title">Resume Preview</h1>
+  
+  <div class="preview-wrapper">
+    <div class="pdf-preview-area">
+      <iframe 
+        src="{{ url_for('resume_form.view_resume_pdf', resume_id=resume_id) }}" 
+        type="application/pdf"
+        class="pdf-preview-frame"
+        title="Resume Preview">
+        <p>Your browser does not support PDFs. 
+          <a href="{{ url_for('resume_form.download_resume_pdf', resume_id=resume_id) }}">Download the PDF</a> instead.
+        </p>
+      </iframe>
+    </div>
+    
+    <div class="preview-actions">
+      <div class="action-buttons-top">
+        <a href="{{ url_for('resume_form.download_resume_pdf', resume_id=resume_id, download='1') }}" 
+           class="btn btn-primary">
+          Export To PDF
+        </a>
+        <a href="{{ url_for('resume_form.resume_form') }}" class="btn btn-secondary">
+          Go Back...
+        </a>
+      </div>
+      
+      <form method="POST" action="{{ url_for('resume_form.set_default_resume', resume_id=resume_id) }}" class="set-default-form">
+        <button type="submit" class="btn btn-default">
+          Set as default Resume to Profile
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,9 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, send_file
 from flask_login import current_user
 from app.utils.pdf_parser import parse_resume_pdf
 from app.utils.latex_filler import fill_latex_template
+from app.utils.pdf_generator import compile_latex_to_pdf_bytes
 from app.services.resume_service import ResumeService
 import os
+import io
 
 resume_form_bp = Blueprint('resume_form', __name__)
 
@@ -334,15 +336,23 @@ def select_template():
             print(filled_latex)
             print("="*80 + "\n")
             
-            # Save the filled LaTeX to a temporary file (or directly to GridFS)
-            # For now, we'll save it and later compile to PDF
-            # TODO: Compile LaTeX to PDF and save to GridFS
-            # For now, store the LaTeX content in the database
+            # Compile LaTeX to PDF
+            pdf_bytes, success, error_message = compile_latex_to_pdf_bytes(filled_latex)
+            
+            if not success:
+                print(f"PDF compilation error: {error_message}")
+                flash(f'Error compiling PDF: {error_message[:200]}')
+                return redirect(url_for('resume_form.select_template'))
+            
+            # Save LaTeX and PDF to GridFS
             from gridfs import GridFS
             from app.extensions import mongo
             from datetime import datetime
+            from bson import ObjectId
             
             fs = GridFS(mongo.db)
+            
+            # Save LaTeX file
             latex_bytes = filled_latex.encode('utf-8')
             latex_file_id = fs.put(
                 latex_bytes,
@@ -350,22 +360,31 @@ def select_template():
                 content_type="text/x-latex"
             )
             
-            # Update resume document with LaTeX file ID and template info
-            from bson import ObjectId
+            # Save PDF file
+            pdf_file_id = fs.put(
+                pdf_bytes,
+                filename=f"resume_{resume_id}_{template_id}.pdf",
+                content_type="application/pdf"
+            )
+            
+            # Update resume document with LaTeX file ID, PDF file ID, and template info
             mongo.db.resumes.update_one(
                 {"_id": ObjectId(resume_id)},
                 {
                     "$set": {
                         "latex_file_id": latex_file_id,
+                        "pdf_file_id": pdf_file_id,
                         "template_id": template_id,
                         "template_name": template['name'],
-                        "latex_generated_at": datetime.utcnow()
+                        "latex_generated_at": datetime.utcnow(),
+                        "pdf_generated_at": datetime.utcnow(),
+                        "resume_path": f"/resume/{resume_id}/preview"
                     }
                 }
             )
             
-            flash(f'Template "{template["name"]}" applied successfully! LaTeX generated. PDF compilation coming soon.')
-            return redirect(url_for('resume_form.resume_form'))
+            flash(f'Resume generated successfully! Preview your resume below.')
+            return redirect(url_for('resume_form.preview_resume', resume_id=resume_id))
             
         except Exception as e:
             print(f"Error generating LaTeX: {e}")
@@ -376,4 +395,180 @@ def select_template():
     
     # GET request - show template selection page
     return render_template('resume_template_selection.html', templates=TEMPLATES)
+
+@resume_form_bp.route('/resume/<resume_id>/preview', methods=['GET'])
+def preview_resume(resume_id):
+    """Preview page for generated resume."""
+    if not current_user.is_authenticated:
+        flash('Please log in to view your resume.')
+        return redirect(url_for('auth.login'))
+    
+    from app.services.resume_service import ResumeService
+    from bson import ObjectId
+    from gridfs import GridFS
+    from app.extensions import mongo
+    
+    try:
+        # Get resume document
+        resume_doc = mongo.db.resumes.find_one({"_id": ObjectId(resume_id)})
+        if not resume_doc:
+            flash('Resume not found.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        # Check if user owns this resume
+        if str(resume_doc.get('user_id')) != str(current_user.id):
+            flash('You do not have permission to view this resume.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        # Check if PDF exists
+        pdf_file_id = resume_doc.get('pdf_file_id')
+        if not pdf_file_id:
+            flash('PDF not yet generated for this resume.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        template_name = resume_doc.get('template_name', 'Unknown Template')
+        
+        return render_template('resume_preview.html', 
+                             resume_id=resume_id,
+                             template_name=template_name)
+    
+    except Exception as e:
+        print(f"Error loading resume preview: {e}")
+        import traceback
+        traceback.print_exc()
+        flash('Error loading resume preview.')
+        return redirect(url_for('resume_form.resume_form'))
+
+@resume_form_bp.route('/resume/<resume_id>/view-pdf', methods=['GET'])
+def view_resume_pdf(resume_id):
+    """View the generated PDF resume in browser/iframe."""
+    if not current_user.is_authenticated:
+        flash('Please log in to view your resume.')
+        return redirect(url_for('auth.login'))
+    
+    from bson import ObjectId
+    from gridfs import GridFS
+    from app.extensions import mongo
+    
+    try:
+        # Get resume document
+        resume_doc = mongo.db.resumes.find_one({"_id": ObjectId(resume_id)})
+        if not resume_doc:
+            flash('Resume not found.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        # Check if user owns this resume
+        if str(resume_doc.get('user_id')) != str(current_user.id):
+            flash('You do not have permission to view this resume.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        # Get PDF from GridFS
+        pdf_file_id = resume_doc.get('pdf_file_id')
+        if not pdf_file_id:
+            flash('PDF not yet generated for this resume.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        fs = GridFS(mongo.db)
+        pdf_file = fs.get(pdf_file_id)
+        
+        # Serve PDF for viewing (not download)
+        return send_file(
+            io.BytesIO(pdf_file.read()),
+            mimetype='application/pdf',
+            as_attachment=False
+        )
+    
+    except Exception as e:
+        print(f"Error loading PDF: {e}")
+        import traceback
+        traceback.print_exc()
+        flash('Error loading PDF.')
+        return redirect(url_for('resume_form.resume_form'))
+
+@resume_form_bp.route('/resume/<resume_id>/pdf', methods=['GET'])
+def download_resume_pdf(resume_id):
+    """Download the generated PDF resume."""
+    if not current_user.is_authenticated:
+        flash('Please log in to download your resume.')
+        return redirect(url_for('auth.login'))
+    
+    from bson import ObjectId
+    from gridfs import GridFS
+    from app.extensions import mongo
+    
+    try:
+        # Get resume document
+        resume_doc = mongo.db.resumes.find_one({"_id": ObjectId(resume_id)})
+        if not resume_doc:
+            flash('Resume not found.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        # Check if user owns this resume
+        if str(resume_doc.get('user_id')) != str(current_user.id):
+            flash('You do not have permission to download this resume.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        # Get PDF from GridFS
+        pdf_file_id = resume_doc.get('pdf_file_id')
+        if not pdf_file_id:
+            flash('PDF not yet generated for this resume.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        fs = GridFS(mongo.db)
+        pdf_file = fs.get(pdf_file_id)
+        
+        # Get resume title for filename
+        resume_title = resume_doc.get('title', 'resume')
+        # Sanitize filename
+        safe_title = "".join(c for c in resume_title if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        filename = f"{safe_title}.pdf" if safe_title else "resume.pdf"
+        
+        # Serve PDF for download
+        return send_file(
+            io.BytesIO(pdf_file.read()),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+    
+    except Exception as e:
+        print(f"Error downloading PDF: {e}")
+        import traceback
+        traceback.print_exc()
+        flash('Error downloading PDF.')
+        return redirect(url_for('resume_form.resume_form'))
+
+@resume_form_bp.route('/resume/<resume_id>/set-default', methods=['POST'])
+def set_default_resume(resume_id):
+    """Set a resume as the user's default resume."""
+    if not current_user.is_authenticated:
+        flash('Please log in to set your default resume.')
+        return redirect(url_for('auth.login'))
+    
+    from app.services.resume_service import ResumeService
+    from bson import ObjectId
+    from app.extensions import mongo
+    
+    try:
+        # Get resume document
+        resume_doc = mongo.db.resumes.find_one({"_id": ObjectId(resume_id)})
+        if not resume_doc:
+            flash('Resume not found.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        # Check if user owns this resume
+        if str(resume_doc.get('user_id')) != str(current_user.id):
+            flash('You do not have permission to set this resume as default.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        # Set as current resume
+        ResumeService.set_current_resume_for_user(str(current_user.id), resume_id)
+        
+        flash('Resume set as default successfully!')
+        return redirect(url_for('resume_form.preview_resume', resume_id=resume_id))
+    
+    except Exception as e:
+        print(f"Error setting default resume: {e}")
+        flash('Error setting default resume.')
+        return redirect(url_for('resume_form.resume_form'))
 

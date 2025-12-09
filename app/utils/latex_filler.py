@@ -77,6 +77,10 @@ def fill_jake_template(structured_data, template_path):
     with open(template_path, 'r', encoding='utf-8') as f:
         template = f.read()
     
+    # Comment out glyphtounicode if it causes issues (it's optional for ATS parsing)
+    # The file might not be available in all LaTeX installations
+    template = template.replace('\\input{glyphtounicode}', '% \\input{glyphtounicode}  % Commented out - optional for ATS parsing')
+    
     # Extract personal info
     first_name = escape_latex(structured_data.get('first_name', ''))
     last_name = escape_latex(structured_data.get('last_name', ''))
