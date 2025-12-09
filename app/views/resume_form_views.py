@@ -197,10 +197,14 @@ def resume_form():
             
             # Save to MongoDB
             user_id = str(current_user.id) if current_user.is_authenticated else None
+            resume_title = form_data.get("resume_title", "").strip()
+            if not resume_title:
+                resume_title = f"{structured_data.get('first_name', '')} {structured_data.get('last_name', '')}".strip() or "Untitled Resume"
+            
             resume_id = ResumeService.save_resume_structured_data(
                 structured_data=structured_data,
                 user_id=user_id,
-                title=f"{structured_data.get('first_name', '')} {structured_data.get('last_name', '')}".strip() or "Untitled Resume"
+                title=resume_title
             )
             
             flash(f'Resume saved successfully! Resume ID: {resume_id}')

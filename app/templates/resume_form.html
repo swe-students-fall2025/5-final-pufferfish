@@ -13,6 +13,20 @@
 
   <form id="resumeForm" method="POST" action="{{ url_for('resume_form.resume_form') }}" {% if prefill_data
     %}data-is-prefilled="true" {% endif %}>
+    <!-- Resume Title/Version -->
+    <section class="form-section">
+      <h2 class="section-title">Resume Title/Version</h2>
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label for="resume_title">Resume Title/Version Name:<span class="required">*</span></label>
+          <input type="text" id="resume_title" name="resume_title" 
+            value="{{ prefill_data.get('resume_title', '') }}"
+            placeholder="e.g., Software Engineer Resume v1, Tech Industry Resume, etc." required>
+          <small style="color: #666; font-size: 0.9em;">Give your resume a name or version to help you organize multiple resumes.</small>
+        </div>
+      </div>
+    </section>
+
     <!-- Personal Contact Info -->
     <section class="form-section">
       <h2 class="section-title">Personal Contact Info</h2>
