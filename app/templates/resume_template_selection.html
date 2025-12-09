@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+
+{% block title %}Choose Resume Template - Puffer Fish{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/template_selection.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="template-selection-container">
+  <h1 class="page-title">Choose Your Resume Template</h1>
+  <p class="page-description">Select a template to generate your resume. Click on a template to preview it, then click "Select This Template" to proceed.</p>
+
+  <div class="templates-grid">
+    {% for template in templates %}
+    <div class="template-card" data-template-id="{{ template.id }}">
+      <div class="template-preview">
+        <object 
+          data="{{ url_for('static', filename=template.preview_path) }}#toolbar=0&navpanes=0&scrollbar=0" 
+          type="application/pdf"
+          class="pdf-preview"
+          title="Preview of {{ template.name }} template">
+          <iframe 
+            src="{{ url_for('static', filename=template.preview_path) }}#toolbar=0&navpanes=0&scrollbar=0" 
+            type="application/pdf"
+            class="pdf-preview"
+            title="Preview of {{ template.name }} template">
+          </iframe>
+        </object>
+        <div class="preview-overlay">
+          <a href="{{ url_for('static', filename=template.preview_path) }}" target="_blank" class="preview-link">
+            View Full Size
+          </a>
+        </div>
+      </div>
+      <div class="template-info">
+        <h3 class="template-name">{{ template.name }}</h3>
+        <p class="template-description">{{ template.description }}</p>
+        <form method="POST" action="{{ url_for('resume_form.select_template') }}" class="template-form">
+          <input type="hidden" name="template_id" value="{{ template.id }}">
+          <button type="submit" class="select-button">Select This Template</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Add hover effect to template cards
+  document.querySelectorAll('.template-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.classList.add('hovered');
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      this.classList.remove('hovered');
+    });
+  });
+
+  // Handle template selection
+  document.querySelectorAll('.template-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      const button = this.querySelector('.select-button');
+      button.textContent = 'Processing...';
+      button.disabled = true;
+    });
+  });
+</script>
+{% endblock %}
+
