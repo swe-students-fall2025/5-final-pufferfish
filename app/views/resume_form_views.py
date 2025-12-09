@@ -202,6 +202,122 @@ def parse_form_data_to_structured(form_data):
     
     return structured
 
+
+def convert_structured_to_form_data(structured_data):
+    """Convert structured resume data back to form data format for editing.
+    
+    Args:
+        structured_data: Dictionary matching the structured_data schema
+        
+    Returns:
+        Dictionary in form data format (prefill_data)
+    """
+    form_data = {
+        'first_name': structured_data.get('first_name', ''),
+        'last_name': structured_data.get('last_name', ''),
+        'email': structured_data.get('email', ''),
+        'phone': structured_data.get('phone_number', ''),
+        'linkedin': structured_data.get('LinkedIn', ''),
+        'website': structured_data.get('Website', ''),
+        'education': [],
+        'experience': [],
+        'skills': [],
+        'projects': []
+    }
+    
+    # Convert education
+    for edu in structured_data.get('education', []):
+        institution = edu.get('institution', '')
+        degree_full = edu.get('degree', '')
+        location = edu.get('location', '')
+        end_month = edu.get('end_month', '')
+        end_year = edu.get('end_year', '')
+        
+        # Try to split degree into degree and field
+        degree = degree_full
+        field = ''
+        if degree_full:
+            # Common patterns: "BS Computer Science", "Bachelor of Arts in Computer Science"
+            parts = degree_full.split(' in ', 1)
+            if len(parts) == 2:
+                degree = parts[0]
+                field = parts[1]
+            else:
+                # Try splitting by space for abbreviations
+                parts = degree_full.split(' ', 1)
+                if len(parts) == 2 and len(parts[0]) <= 5:  # Likely an abbreviation
+                    degree = parts[0]
+                    field = parts[1]
+        
+        form_data['education'].append({
+            'school': institution,
+            'location': location,
+            'degree': degree,
+            'field': field,
+            'end_month': end_month if end_month else '',
+            'end_year': str(end_year) if end_year else ''
+        })
+    
+    # Convert experience
+    for exp in structured_data.get('experience', []):
+        company = exp.get('company', '')
+        role = exp.get('role', '')
+        location = exp.get('location', '')
+        start = exp.get('start', '')
+        end = exp.get('end', 'Present')
+        bullets = exp.get('bullets', [])
+        
+        # Parse dates
+        start_month = ''
+        start_year = ''
+        if start and start != 'Present':
+            if '-' in start:
+                parts = start.split('-')
+                if len(parts) >= 2:
+                    start_year = parts[0]
+                    start_month = parts[1].lstrip('0') if len(parts[1]) > 1 else parts[1]
+        
+        end_month = ''
+        end_year = ''
+        currently_working = (end == 'Present')
+        if end and end != 'Present':
+            if '-' in end:
+                parts = end.split('-')
+                if len(parts) >= 2:
+                    end_year = parts[0]
+                    end_month = parts[1].lstrip('0') if len(parts[1]) > 1 else parts[1]
+        
+        form_data['experience'].append({
+            'title': role,
+            'company': company,
+            'location': location,
+            'start_month': start_month,
+            'start_year': start_year,
+            'end_month': end_month,
+            'end_year': end_year,
+            'currently_working': currently_working,
+            'bullets': bullets
+        })
+    
+    # Convert skills
+    for skill in structured_data.get('skills', []):
+        form_data['skills'].append({
+            'category': skill.get('category', ''),
+            'skills': skill.get('skills', '')
+        })
+    
+    # Convert projects
+    for proj in structured_data.get('projects', []):
+        form_data['projects'].append({
+            'title': proj.get('title', ''),
+            'name': '',  # Not stored in structured data
+            'skills': proj.get('skills', ''),
+            'bullets': proj.get('bullets', [])
+        })
+    
+    return form_data
+
+
 @resume_form_bp.route('/resume-form', methods=['GET', 'POST'])
 def resume_form():
     """Resume form page - shows form on GET, processes on POST.
@@ -400,7 +516,49 @@ def select_template():
             return redirect(url_for('resume_form.select_template'))
     
     # GET request - show template selection page
-    return render_template('resume_template_selection.html', templates=TEMPLATES)
+    # Get resume_id from session or query param
+    resume_id = session.get('current_resume_id') or request.args.get('resume_id')
+    return render_template('resume_template_selection.html', templates=TEMPLATES, resume_id=resume_id)
+
+@resume_form_bp.route('/resume/<resume_id>/edit', methods=['GET'])
+def edit_resume(resume_id):
+    """Load resume data and redirect to form for editing."""
+    if not current_user.is_authenticated:
+        flash('Please log in to edit your resume.')
+        return redirect(url_for('auth.login'))
+    
+    from bson import ObjectId
+    from app.extensions import mongo
+    from app.services.resume_service import ResumeService
+    
+    try:
+        # Get structured data from MongoDB
+        structured_data = ResumeService.get_resume_structured_data(resume_id)
+        if not structured_data:
+            flash('Resume data not found.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        # Check if user owns this resume
+        resume_doc = mongo.db.resumes.find_one({"_id": ObjectId(resume_id)})
+        if not resume_doc or str(resume_doc.get('user_id')) != str(current_user.id):
+            flash('You do not have permission to edit this resume.')
+            return redirect(url_for('resume_form.resume_form'))
+        
+        # Convert structured data back to form format
+        prefill_data = convert_structured_to_form_data(structured_data)
+        
+        # Store resume_id in session so after editing, they can go back to template selection
+        session['current_resume_id'] = resume_id
+        
+        flash('Resume data loaded. You can now edit your information.')
+        return render_template('resume_form.html', prefill_data=prefill_data)
+    
+    except Exception as e:
+        print(f"Error loading resume for editing: {e}")
+        import traceback
+        traceback.print_exc()
+        flash('Error loading resume data.')
+        return redirect(url_for('resume_form.resume_form'))
 
 @resume_form_bp.route('/resume/<resume_id>/preview', methods=['GET'])
 def preview_resume(resume_id):

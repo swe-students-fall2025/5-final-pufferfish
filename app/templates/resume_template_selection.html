@@ -11,6 +11,14 @@
   <h1 class="page-title">Choose Your Resume Template</h1>
   <p class="page-description">Select a template to generate your resume. Click on a template to preview it, then click "Select This Template" to proceed.</p>
 
+  {% if resume_id %}
+  <div class="edit-resume-button-container">
+    <a href="{{ url_for('resume_form.edit_resume', resume_id=resume_id) }}" class="btn-edit-resume">
+      ← Revise Resume Information
+    </a>
+  </div>
+  {% endif %}
+
   <div class="templates-grid">
     {% for template in templates %}
     <div class="template-card" data-template-id="{{ template.id }}">

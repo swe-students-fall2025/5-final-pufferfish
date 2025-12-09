@@ -17,11 +17,39 @@
 .page-description {
   text-align: center;
   color: #666;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   font-size: 1.1rem;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.edit-resume-button-container {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.btn-edit-resume {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #6b7280;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-edit-resume:hover {
+  background: #4b5563;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-edit-resume:active {
+  transform: translateY(0);
 }
 
 .templates-grid {
