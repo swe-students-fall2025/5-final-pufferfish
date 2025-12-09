@@ -47,9 +47,10 @@ def create_app(config_class=Config):
     app.register_blueprint(resume_reviews_bp)
 
     # mongo
-    mongo.db.resumes.create_index([
-        ('$**', 'text')
-    ])
-
-
+    try:
+        mongo.db.resumes.create_index([
+            ('$**', 'text')
+        ])
+    except Exception as e:
+        app.logger.warning(f"Could not create text index on 'resumes' collection: {e}")
     return app
