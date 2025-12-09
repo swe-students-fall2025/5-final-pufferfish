@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from flask_login import current_user
 from app.utils.pdf_parser import parse_resume_pdf
+from app.utils.latex_filler import fill_latex_template
 from app.services.resume_service import ResumeService
+import os
 
 resume_form_bp = Blueprint('resume_form', __name__)
 
@@ -60,6 +62,7 @@ def parse_form_data_to_structured(form_data):
         graduation_year = form_data.get(f"education_{i}_graduation_year", "").strip()
         degree = form_data.get(f"education_{i}_degree", "").strip()
         field = form_data.get(f"education_{i}_field", "").strip()
+        location = form_data.get(f"education_{i}_location", "").strip()
         
         # Combine degree and field if both exist
         full_degree = degree
@@ -72,6 +75,7 @@ def parse_form_data_to_structured(form_data):
         edu_entry = {
             "institution": school,
             "degree": full_degree if full_degree else "",
+            "location": location,
             "end_month": graduation_month if graduation_month else None,
             "end_year": int(graduation_year) if graduation_year.isdigit() else None
         }
@@ -134,6 +138,7 @@ def parse_form_data_to_structured(form_data):
         exp_entry = {
             "company": company,
             "role": title,
+            "location": location,
             "start": start_date,
             "end": end_date,
             "bullets": bullets
@@ -296,14 +301,71 @@ def select_template():
             flash('Invalid template selected.')
             return redirect(url_for('resume_form.select_template'))
         
-        # Store selected template in session
-        session['selected_template'] = template_id
-        session['selected_template_path'] = template['template_path']
+        # Get resume_id from session
+        resume_id = session.get('current_resume_id')
+        if not resume_id:
+            flash('Resume data not found. Please fill out the form again.')
+            return redirect(url_for('resume_form.resume_form'))
         
-        # TODO: Generate PDF from LaTeX template with form data
-        # For now, just show a success message
-        flash(f'Template "{template["name"]}" selected! PDF generation coming soon.')
-        return redirect(url_for('resume_form.resume_form'))
+        try:
+            # Get structured data from MongoDB
+            structured_data = ResumeService.get_resume_structured_data(resume_id)
+            if not structured_data:
+                flash('Resume data not found in database.')
+                return redirect(url_for('resume_form.resume_form'))
+            
+            # Get the template path
+            template_filename = template['template_path']
+            # Get the static folder path (usually app/static)
+            static_folder = os.path.join(current_app.root_path, 'static')
+            template_path = os.path.join(static_folder, template_filename)
+            
+            if not os.path.exists(template_path):
+                flash(f'Template file not found: {template_filename}')
+                return redirect(url_for('resume_form.select_template'))
+            
+            # Fill the LaTeX template with data
+            filled_latex = fill_latex_template(structured_data, template_id, template_path)
+            
+            # Save the filled LaTeX to a temporary file (or directly to GridFS)
+            # For now, we'll save it and later compile to PDF
+            # TODO: Compile LaTeX to PDF and save to GridFS
+            # For now, store the LaTeX content in the database
+            from gridfs import GridFS
+            from app.extensions import mongo
+            from datetime import datetime
+            
+            fs = GridFS(mongo.db)
+            latex_bytes = filled_latex.encode('utf-8')
+            latex_file_id = fs.put(
+                latex_bytes,
+                filename=f"resume_{resume_id}_{template_id}.tex",
+                content_type="text/x-latex"
+            )
+            
+            # Update resume document with LaTeX file ID and template info
+            from bson import ObjectId
+            mongo.db.resumes.update_one(
+                {"_id": ObjectId(resume_id)},
+                {
+                    "$set": {
+                        "latex_file_id": latex_file_id,
+                        "template_id": template_id,
+                        "template_name": template['name'],
+                        "latex_generated_at": datetime.utcnow()
+                    }
+                }
+            )
+            
+            flash(f'Template "{template["name"]}" applied successfully! LaTeX generated. PDF compilation coming soon.')
+            return redirect(url_for('resume_form.resume_form'))
+            
+        except Exception as e:
+            print(f"Error generating LaTeX: {e}")
+            import traceback
+            traceback.print_exc()
+            flash(f'Error generating resume: {str(e)}')
+            return redirect(url_for('resume_form.select_template'))
     
     # GET request - show template selection page
     return render_template('resume_template_selection.html', templates=TEMPLATES)
