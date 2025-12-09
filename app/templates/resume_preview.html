@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block title %}Resume Preview - Puffer Fish{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_preview.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="preview-container">
+  <h1 class="page-title">Resume Preview</h1>
+  
+  <div class="preview-wrapper">
+    <div class="pdf-preview-area">
+      <iframe 
+        src="{{ url_for('resume_form.view_resume_pdf', resume_id=resume_id) }}" 
+        type="application/pdf"
+        class="pdf-preview-frame"
+        title="Resume Preview">
+        <p>Your browser does not support PDFs. 
+          <a href="{{ url_for('resume_form.download_resume_pdf', resume_id=resume_id) }}">Download the PDF</a> instead.
+        </p>
+      </iframe>
+    </div>
+    
+    <div class="preview-actions">
+      <a href="{{ url_for('resume_form.select_template', resume_id=resume_id) }}" class="btn btn-secondary">
+        Go Back...
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
