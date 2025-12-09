@@ -149,7 +149,8 @@ def fill_jake_template(structured_data, template_path):
         education_section += "  \\resumeSubHeadingListEnd\n\n"
     
     # Replace Education section
-    education_pattern = r'%-----------EDUCATION-----------.*?\\resumeSubHeadingListEnd'
+    # Match from EDUCATION comment through the section and all content until the closing \resumeSubHeadingListEnd
+    education_pattern = r'%-----------EDUCATION-----------\s*\\section\{Education\}.*?\\resumeSubHeadingListEnd(?=\s*\n\s*\n|$)'
     if education_section:
         template = re.sub(education_pattern, lambda m: education_section.rstrip(), template, flags=re.DOTALL)
     else:
@@ -186,7 +187,9 @@ def fill_jake_template(structured_data, template_path):
         experience_section += "  \\resumeSubHeadingListEnd\n\n"
     
     # Replace Experience section
-    experience_pattern = r'%-----------EXPERIENCE-----------.*?\\resumeSubHeadingListEnd'
+    # Match from EXPERIENCE comment through the section and all content until the closing \resumeSubHeadingListEnd
+    # Use a more specific pattern to avoid matching commented sections
+    experience_pattern = r'%-----------EXPERIENCE-----------\s*\\section\{Experience\}.*?\\resumeSubHeadingListEnd(?=\s*\n\s*\n|$)'
     if experience_section:
         template = re.sub(experience_pattern, lambda m: experience_section.rstrip(), template, flags=re.DOTALL)
     else:
@@ -221,7 +224,8 @@ def fill_jake_template(structured_data, template_path):
         projects_section += "    \\resumeSubHeadingListEnd\n\n\n"
     
     # Replace Projects section
-    projects_pattern = r'%-----------PROJECTS-----------.*?\\resumeSubHeadingListEnd'
+    # Match from PROJECTS comment through the section and all content until the closing \resumeSubHeadingListEnd
+    projects_pattern = r'%-----------PROJECTS-----------\s*\\section\{Projects\}.*?\\resumeSubHeadingListEnd(?=\s*\n\s*\n|$)'
     if projects_section:
         template = re.sub(projects_pattern, lambda m: projects_section.rstrip(), template, flags=re.DOTALL)
     else:
@@ -248,7 +252,8 @@ def fill_jake_template(structured_data, template_path):
             skills_section = ""
     
     # Replace Skills section
-    skills_pattern = r'%-----------PROGRAMMING SKILLS-----------.*?\\end\{itemize\}'
+    # Match from PROGRAMMING SKILLS comment through the section and all content until the closing \end{itemize}
+    skills_pattern = r'%-----------PROGRAMMING SKILLS-----------\s*\\section\{Technical Skills\}.*?\\end\{itemize\}(?=\s*\n\s*\n|$)'
     if skills_section:
         template = re.sub(skills_pattern, lambda m: skills_section.rstrip(), template, flags=re.DOTALL)
     else:

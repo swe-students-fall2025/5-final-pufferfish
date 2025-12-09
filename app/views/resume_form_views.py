@@ -289,10 +289,16 @@ def select_template():
         flash('Please log in to select a template.')
         return redirect(url_for('auth.login'))
     
-    # Check if resume_id exists in session (from form submission)
+    # Check if resume_id exists in session (from form submission) or if coming from preview page
+    # If coming from preview, we can get resume_id from query param or keep using session
     if 'current_resume_id' not in session:
-        flash('Please fill out the resume form first.')
-        return redirect(url_for('resume_form.resume_form'))
+        # Allow access if user has a resume_id in query param (coming from preview page)
+        resume_id_from_query = request.args.get('resume_id')
+        if resume_id_from_query:
+            session['current_resume_id'] = resume_id_from_query
+        else:
+            flash('Please fill out the resume form first.')
+            return redirect(url_for('resume_form.resume_form'))
     
     if request.method == 'POST':
         template_id = request.form.get('template_id')
