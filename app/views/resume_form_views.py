@@ -327,6 +327,13 @@ def select_template():
             # Fill the LaTeX template with data
             filled_latex = fill_latex_template(structured_data, template_id, template_path)
             
+            # Log the generated LaTeX for debugging
+            print("\n" + "="*80)
+            print("GENERATED LaTeX CONTENT:")
+            print("="*80)
+            print(filled_latex)
+            print("="*80 + "\n")
+            
             # Save the filled LaTeX to a temporary file (or directly to GridFS)
             # For now, we'll save it and later compile to PDF
             # TODO: Compile LaTeX to PDF and save to GridFS
