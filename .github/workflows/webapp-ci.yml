@@ -22,8 +22,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Run black
-        run: black .
+      - name: Run black check
+        run: black --check --diff .
 
       - name: Run tests
         # Disable coverage check for now
