@@ -8,53 +8,6 @@
     {% block extra_css %}{% endblock %}
   </head>
 
-  <!-- <body>
-    <nav class="container-fluid">
-      <ul>
-        <li>
-          <a href="{{ url_for('main.index') }}" class="contrast"
-            ><strong>Pufferfish</strong></a
-          >
-        </li>
-      </ul>
-      <ul>
-        {% if current_user.is_authenticated %}
-        <li>
-          <small
-            >Welcome, {{ current_user.first_name or current_user.email }}</small
-          >
-        </li>
-        <li>
-          <a href="{{ url_for('resume_form.upload_resume') }}">Resume Form</a>
-        </li>
-        <li>
-          <a href="{{ url_for('feed.feed_home') }}">Feed</a>
-        </li>
-        <li>
-          <a href="{{ url_for('resume.store_resume') }}">Store Resume</a>
-        </li>
-
-
-        <li>
-          <a href="{{ url_for('resume_reviews.resume_reviews_home') }}">My Resume Reviews</a>
-        </li>
-
-
-        <li>
-          <a
-            href="{{ url_for('auth.logout') }}"
-            role="button"
-            class="secondary outline"
-            >Logout</a
-          >
-        </li>
-        {% else %}
-        <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-        <li><a href="{{ url_for('auth.signup') }}" role="button">Signup</a></li>
-        {% endif %}
-      </ul>
-    </nav> -->
-
 <body>
   <nav class="container-fluid">
     <ul>
