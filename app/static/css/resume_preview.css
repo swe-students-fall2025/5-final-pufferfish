@@ -38,18 +38,8 @@
 
 .preview-actions {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.action-buttons-top {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-start;
-}
-
-.set-default-form {
-  width: 100%;
+  justify-content: center;
+  align-items: center;
 }
 
 .btn {
@@ -60,10 +50,14 @@
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  line-height: 1.5;
+  box-sizing: border-box;
 }
 
 .btn-primary {
@@ -80,6 +74,7 @@
 .btn-secondary {
   background: #6b7280;
   color: white;
+  min-height: 48px;
 }
 
 .btn-secondary:hover {
@@ -89,9 +84,11 @@
 }
 
 .btn-default {
-  width: 100%;
   background: #9ca3af;
   color: white;
+  min-width: 250px;
+  padding: 0.875rem 2rem;
+  min-height: 48px;
 }
 
 .btn-default:hover {
@@ -119,12 +116,13 @@
     height: 600px;
   }
 
-  .action-buttons-top {
-    flex-direction: column;
+  .action-buttons-container {
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
-  .btn {
-    width: 100%;
+  .btn-default {
+    min-width: 200px;
   }
 }
 
