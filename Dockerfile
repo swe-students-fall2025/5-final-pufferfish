@@ -4,6 +4,7 @@ FROM python:3.11-slim
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     openssl \
+    bash \
     texlive-latex-base \
     texlive-latex-recommended \
     texlive-latex-extra \
@@ -14,6 +15,9 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+COPY entrypoint.sh .
+RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -21,4 +25,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "run:app"]
+CMD ["bash", "./entrypoint.sh"]
