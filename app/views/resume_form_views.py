@@ -5,6 +5,24 @@ from app.services.resume_service import ResumeService
 
 resume_form_bp = Blueprint('resume_form', __name__)
 
+# Template definitions
+TEMPLATES = [
+    {
+        'id': 'jake',
+        'name': 'Jake Template',
+        'description': 'A clean and professional template with a traditional layout. Perfect for academic and technical positions.',
+        'preview_path': 'templates/jake/preview.pdf',
+        'template_path': 'templates/jake/template.tex'
+    },
+    {
+        'id': 'harshibar',
+        'name': 'Harshibar Template',
+        'description': 'A modern template with a sleek design. Great for creative and tech industry positions.',
+        'preview_path': 'templates/harshibar/preview.pdf',
+        'template_path': 'templates/harshibar/template.tex'
+    }
+]
+
 
 def parse_form_data_to_structured(form_data):
     """Parse form data and transform it to the structured JSON schema.
@@ -207,9 +225,11 @@ def resume_form():
                 title=resume_title
             )
             
-            flash(f'Resume saved successfully! Resume ID: {resume_id}')
-            # TODO: Redirect to template selection page
-            return redirect(url_for('resume_form.resume_form'))
+            # Store resume_id in session for template selection
+            session['current_resume_id'] = resume_id
+            
+            flash(f'Resume saved successfully! Please choose a template.')
+            return redirect(url_for('resume_form.select_template'))
         except Exception as e:
             print(f"Error saving resume: {e}")
             flash('Error saving resume. Please try again.')
@@ -262,8 +282,8 @@ def select_template():
         flash('Please log in to select a template.')
         return redirect(url_for('auth.login'))
     
-    # Check if form data exists in session
-    if 'resume_form_data' not in session:
+    # Check if resume_id exists in session (from form submission)
+    if 'current_resume_id' not in session:
         flash('Please fill out the resume form first.')
         return redirect(url_for('resume_form.resume_form'))
     
