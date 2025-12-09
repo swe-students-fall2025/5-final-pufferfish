@@ -31,4 +31,3 @@ def resume_reviews_home():
         resume_entries=resume_entries,
         current_resume_id=current_resume_id,
     )
-
