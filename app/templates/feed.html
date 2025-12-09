@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+
+{% block title %}Feed - Pufferfish{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/feed.css') }}">
+{% endblock %}
+
+{% block content %}
+<article class="feed-container">
+    <header>
+        <h4>Resume Feed</h4>
+        <p>Browse and search resumes</p>
+    </header>
+
+    <!-- SEARCH AND FILTER SECTION -->
+    <div class="search-filters">
+        <form method="GET" action="{{ url_for('feed.feed_home') }}">
+            <input type="text" name="q" placeholder="Search resumes..." value="{{ query }}">
+
+
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <div class="feed-content">
+        <!-- THUMBNAILS GRID -->
+        <div class="thumbnails-grid">
+            {% if resumes %}
+            {% for resume in resumes %}
+            <div class="thumbnail-card" data-index="{{ loop.index0 }}">
+                <canvas id="thumbnail-{{ loop.index0 }}" class="thumbnail-canvas"></canvas>
+                <div class="thumbnail-info">
+                    <h6>{{ resume.get('title', 'Untitled') }}</h6>
+                    <small>{{ resume.get('experience_level', '') }}</small>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="resume-placeholder">
+                No resumes found
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- RESUME DETAILS BOX -->
+        <div class="details-box">
+            <h6>Resume Details</h6>
+            <div id="details-display" class="details-slide">
+                <p>Select a resume to view details</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="pagination">
+        {% if page > 1 %}
+        <a
+            href="{{ url_for('feed.feed_home', q=query, page=page-1) }}">Previous</a>
+        {% endif %}
+
+        <span>Page {{ page }} of {{ (total // per_page) + 1 if total > 0 else 1 }}</span>
+
+        {% if page * per_page < total %} <a
+            href="{{ url_for('feed.feed_home', q=query, page=page+1) }}">
+            Next</a>
+            {% endif %}
+    </div>
+</article>
+
+<script>
+    window.feedResumes = {{ resumes | tojson }};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="{{ url_for('static', filename='js/feed.js') }}"></script>
+{% endblock %}

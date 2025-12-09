@@ -9,26 +9,54 @@
 {% block content %}
 <div class="preview-container">
   <h1 class="page-title">Resume Preview</h1>
+  <p class="page-description">Review your generated resume. Hover over the preview to view it in full size.</p>
+  
+  
   
   <div class="preview-wrapper">
-    <div class="pdf-preview-area">
-      <iframe 
-        src="{{ url_for('resume_form.view_resume_pdf', resume_id=resume_id) }}" 
-        type="application/pdf"
-        class="pdf-preview-frame"
-        title="Resume Preview">
-        <p>Your browser does not support PDFs. 
-          <a href="{{ url_for('resume_form.download_resume_pdf', resume_id=resume_id) }}">Download the PDF</a> instead.
-        </p>
-      </iframe>
-    </div>
-    
-    <div class="preview-actions">
-      <a href="{{ url_for('resume_form.select_template', resume_id=resume_id) }}" class="btn btn-secondary">
-        Go Back...
-      </a>
+    <div class="preview-card">
+      <div class="pdf-preview-area">
+        <object 
+          data="{{ url_for('resume_form.view_resume_pdf', resume_id=resume_id) }}#toolbar=0&navpanes=0&scrollbar=0" 
+          type="application/pdf"
+          class="pdf-preview"
+          title="Resume Preview">
+          <iframe 
+            src="{{ url_for('resume_form.view_resume_pdf', resume_id=resume_id) }}#toolbar=0&navpanes=0&scrollbar=0" 
+            type="application/pdf"
+            class="pdf-preview"
+            title="Resume Preview">
+            <p>Your browser does not support PDFs. 
+              <a href="{{ url_for('resume_form.download_resume_pdf', resume_id=resume_id) }}">Download the PDF</a> instead.
+            </p>
+          </iframe>
+        </object>
+        <div class="preview-overlay">
+          <a href="{{ url_for('resume_form.view_resume_pdf', resume_id=resume_id) }}" target="_blank" class="preview-link">
+            View Full Size
+          </a>
+        </div>
+      </div>
     </div>
   </div>
+  <div class="go-back-button-container">
+    <a href="{{ url_for('resume_form.select_template', resume_id=resume_id) }}" class="btn-go-back">
+      ← Go Back to Templates
+    </a>
+  </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Add hover effect to preview card
+  document.querySelector('.preview-card').addEventListener('mouseenter', function() {
+    this.classList.add('hovered');
+  });
+  
+  document.querySelector('.preview-card').addEventListener('mouseleave', function() {
+    this.classList.remove('hovered');
+  });
+</script>
 {% endblock %}
 
