@@ -3,33 +3,40 @@
 {% block title %}Sign Up - Pufferfish{% endblock %}
 
 {% block content %}
-<article>
-  <header>
-    <h2>Sign Up</h2>
-  </header>
-  <form method="POST">
-    <div class="grid">
-      <label for="first_name">
-        First Name
-        <input type="text" id="first_name" name="first_name" placeholder="John" required>
+<div style="max-width: 450px; margin: 2rem auto;">
+  <article>
+    <header style="text-align: center; padding-bottom: 1rem;">
+      <img src="{{ url_for('static', filename='logo/pufferfish_logo.png') }}" alt="Pufferfish Logo"
+        style="height: 80px; margin-bottom: 1rem;" />
+      <h2 style="margin: 0;">Create Your Account</h2>
+      <p style="color: var(--pico-muted-color); margin-top: 0.5rem;">
+        Join Pufferfish and start improving your resume
+      </p>
+    </header>
+    <form method="POST">
+      <div class="grid">
+        <label for="first_name">
+          First Name
+          <input type="text" id="first_name" name="first_name" placeholder="John" required>
+        </label>
+        <label for="last_name">
+          Last Name
+          <input type="text" id="last_name" name="last_name" placeholder="Doe" required>
+        </label>
+      </div>
+      <label for="email">
+        Email
+        <input type="email" id="email" name="email" placeholder="you@example.com" required>
       </label>
-      <label for="last_name">
-        Last Name
-        <input type="text" id="last_name" name="last_name" placeholder="Doe" required>
+      <label for="password">
+        Password
+        <input type="password" id="password" name="password" placeholder="Choose a password" required>
       </label>
-    </div>
-    <label for="email">
-      Email
-      <input type="email" id="email" name="email" placeholder="you@example.com" required>
-    </label>
-    <label for="password">
-      Password
-      <input type="password" id="password" name="password" placeholder="Choose a password" required>
-    </label>
-    <button type="submit">Sign Up</button>
-  </form>
-  <footer>
-    <small>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></small>
-  </footer>
-</article>
+      <button type="submit" class="contrast">Sign Up</button>
+    </form>
+    <footer style="text-align: center;">
+      <small>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></small>
+    </footer>
+  </article>
+</div>
 {% endblock %}

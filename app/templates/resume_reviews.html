@@ -1,0 +1,338 @@
+{% extends "layout.html" %}
+
+{% block title %}My Resume Reviews - Pufferfish{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_reviews.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_viewer.css') }}">
+{% endblock %}
+
+{% block main %}
+<div class="resume-viewer-container" style="margin-top: 20px;">
+
+  <!-- Column 1: Previous Button -->
+  <div class="nav-col">
+    <button id="prev-btn" class="nav-btn secondary outline" disabled>&lt;</button>
+  </div>
+
+  <!-- Column 2: PDF Viewer -->
+  <main id="pdf-viewer">
+    <div id="viewer" class="pdfViewer"></div>
+  </main>
+
+  <!-- Column 3: Comments Sidebar -->
+  <aside id="comments-sidebar">
+    <div class="reviewer-header">
+      <small id="version-label">Loading version...</small>
+      <h5 id="reviewer-name" style="margin:0;">Loading...</h5>
+    </div>
+
+    <h6>Comments</h6>
+    <div id="comments-list"></div>
+  </aside>
+
+  <!-- Column 4: Next Button -->
+  <div class="nav-col">
+    <button id="next-btn" class="nav-btn secondary outline" disabled>&gt;</button>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="{{ url_for('static', filename='js/resume_viewer.js') }}"></script>
+<script>
+  /* eslint-disable */
+  const resumeEntries = JSON.parse('{{ resume_entries | tojson | safe }}');
+  const currentResumeId = JSON.parse('{{ current_resume_id | tojson | safe }}');
+  let currentResumeIndex = Math.max(
+    0,
+    resumeEntries.findIndex((r) => r._id === currentResumeId)
+  );
+  if (currentResumeIndex === -1) currentResumeIndex = 0;
+  let currentReviewIndex = 0;
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const PDF_SCALE = 1.5;
+  let pdfDocument = null;
+  let viewerApi = null;
+  const pdfCache = new Map();
+
+  async function getPdfData(url) {
+    if (pdfCache.has(url)) {
+      // pdf.js may transfer the underlying buffer to a worker, so return a copy
+      const cached = pdfCache.get(url);
+      return cached.slice();
+    }
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const data = new Uint8Array(buffer);
+    pdfCache.set(url, data);
+    return data.slice();
+  }
+
+  function getCurrentEntry() {
+    return resumeEntries[currentResumeIndex] || null;
+  }
+
+  function getCurrentReviews() {
+    const entry = getCurrentEntry();
+    return (entry && entry.reviews) || [];
+  }
+
+  function updateVersionDisplay() {
+    const versionLabel = document.getElementById("version-label");
+    const prevBtn = document.getElementById("prev-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const entry = getCurrentEntry();
+    if (!entry) {
+      versionLabel.textContent = "No resume";
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+      return;
+    }
+    versionLabel.textContent = `${entry.title || "Resume"} (${currentResumeIndex + 1}/${resumeEntries.length})`;
+    prevBtn.disabled = currentResumeIndex === 0;
+    nextBtn.disabled = currentResumeIndex === resumeEntries.length - 1;
+  }
+
+  // helper to create highlight rectangles
+  function createHighlightRect(bounds, highlightId = null) {
+    const rect = document.createElement("div");
+    rect.className = "highlight-rect";
+    rect.style.left = bounds.left + "px";
+    rect.style.top = bounds.top + "px";
+    rect.style.width = bounds.width + "px";
+    rect.style.height = bounds.height + "px";
+
+    if (highlightId) {
+      rect.setAttribute("data-highlight-id", highlightId);
+      rect.style.cursor = "pointer";
+      rect.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectCommentById(highlightId);
+      });
+    }
+
+    return rect;
+  }
+
+  // render highlights for a specific page using current review data
+  function renderHighlights(pageNum, viewport, highlightLayer) {
+    highlightLayer.innerHTML = "";
+
+    const reviews = getCurrentReviews();
+    const currentReview = reviews[currentReviewIndex];
+    if (!currentReview) return;
+
+    const highlights = currentReview.highlights || {};
+    const pageKey = pageNum.toString();
+
+    if (highlights[pageKey] && highlights[pageKey].length > 0) {
+      highlights[pageKey].forEach((highlight) => {
+        if (highlight.rects && highlight.rects.length > 0) {
+          highlight.rects.forEach((rectData) => {
+            const startPdf = [rectData.x, rectData.y];
+            const endPdf = [
+              rectData.x + rectData.width,
+              rectData.y - rectData.height,
+            ];
+
+            const startViewport = viewport.convertToViewportPoint(
+              startPdf[0],
+              startPdf[1]
+            );
+            const endViewport = viewport.convertToViewportPoint(
+              endPdf[0],
+              endPdf[1]
+            );
+
+            const bounds = {
+              left: Math.min(startViewport[0], endViewport[0]),
+              top: Math.min(startViewport[1], endViewport[1]),
+              width: Math.abs(endViewport[0] - startViewport[0]),
+              height: Math.abs(endViewport[1] - startViewport[1]),
+            };
+
+            const rect = createHighlightRect(bounds, highlight.id);
+            highlightLayer.appendChild(rect);
+          });
+        }
+      });
+    }
+  }
+
+  // re-render highlights on all visible pages
+  function updateAllHighlights() {
+    const pages = document.querySelectorAll(".page-container");
+    pages.forEach(async (pageDiv, index) => {
+      const pageNum = index + 1;
+      const highlightLayer = pageDiv.querySelector(".highlight-layer");
+      const pdfPage = await pdfDocument.getPage(pageNum);
+      const viewport = pdfPage.getViewport({ scale: PDF_SCALE });
+      renderHighlights(pageNum, viewport, highlightLayer);
+    });
+  }
+
+  // main PDF render
+  async function render() {
+    const entry = getCurrentEntry();
+    if (!entry) {
+      const viewer = document.getElementById("viewer");
+      if (viewer) viewer.innerHTML = "<p>No resumes found.</p>";
+      return;
+    }
+
+    const pdfData = await getPdfData(entry.resume_path);
+
+    viewerApi = createResumeViewer({
+      pdfData,
+      scale: PDF_SCALE,
+      renderHighlightsForPage: (pageNum, viewport, highlightLayer) =>
+        renderHighlights(pageNum, viewport, highlightLayer),
+    });
+
+    await viewerApi.render();
+    pdfDocument = viewerApi.getDocument();
+
+    // initial UI state
+    updateReviewerDisplay();
+    updateVersionDisplay();
+  }
+
+  // update the UI for the current reviewer
+  function updateReviewerDisplay() {
+    const reviewerNameEl = document.getElementById("reviewer-name");
+    const reviews = getCurrentReviews();
+
+    if (reviews.length === 0) {
+      reviewerNameEl.textContent = "No Reviews";
+      renderComments(); // will clear comments
+      updateAllHighlights(); // will clear highlights
+      return;
+    }
+
+    const currentReview = reviews[currentReviewIndex];
+    reviewerNameEl.textContent = currentReview.reviewer_name || "Anonymous";
+
+    // update content
+    renderComments();
+    updateAllHighlights();
+  }
+
+  // render comments sidebar
+  function renderComments() {
+    const commentsList = document.getElementById("comments-list");
+    commentsList.innerHTML = "";
+
+    const reviews = getCurrentReviews();
+    const currentReview = reviews[currentReviewIndex];
+    if (!currentReview) {
+      commentsList.innerHTML = "<p>No comments available.</p>";
+      return;
+    }
+
+    const highlights = currentReview.highlights || {};
+    let allComments = [];
+
+    Object.keys(highlights).forEach((pageKey) => {
+      const pageHighlights = highlights[pageKey];
+      if (Array.isArray(pageHighlights)) {
+        pageHighlights.forEach((highlight, index) => {
+          if (highlight && highlight.comment && highlight.comment.trim() !== "") {
+            allComments.push({
+              pageNum: parseInt(pageKey),
+              highlight: highlight,
+            });
+          }
+        });
+      }
+    });
+
+    allComments.sort((a, b) => {
+      if (a.pageNum !== b.pageNum) return a.pageNum - b.pageNum;
+      const aTop = a.highlight.rects[0]?.y || 0;
+      const bTop = b.highlight.rects[0]?.y || 0;
+      return bTop - aTop;
+    });
+
+    if (allComments.length === 0) {
+      commentsList.innerHTML = "<p>No comments yet.</p>";
+      return;
+    }
+
+    allComments.forEach(({ pageNum, highlight }) => {
+      const commentItem = document.createElement("div");
+      commentItem.className = "comment-item";
+      commentItem.setAttribute("data-highlight-id", highlight.id);
+
+      const commentText = document.createElement("div");
+      commentText.className = "comment-text";
+      commentText.textContent = highlight.comment;
+      commentItem.appendChild(commentText);
+
+      commentItem.addEventListener("click", () => {
+        selectComment(commentItem, highlight.id);
+      });
+
+      commentsList.appendChild(commentItem);
+    });
+  }
+
+  function selectComment(commentElement, highlightId) {
+    const commentsList = document.getElementById("comments-list");
+    const allComments = commentsList.querySelectorAll(".comment-item");
+    allComments.forEach((item) => item.classList.remove("selected"));
+    commentElement.classList.add("selected");
+    highlightYellowBoxes(highlightId);
+  }
+
+  function selectCommentById(highlightId) {
+    const commentsList = document.getElementById("comments-list");
+    const allComments = commentsList.querySelectorAll(".comment-item");
+    allComments.forEach((item) => item.classList.remove("selected"));
+
+    let targetItem = null;
+    allComments.forEach((item) => {
+      if (item.getAttribute("data-highlight-id") === highlightId) {
+        item.classList.add("selected");
+        targetItem = item;
+      }
+    });
+
+    if (targetItem) {
+      targetItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    highlightYellowBoxes(highlightId);
+  }
+
+  function highlightYellowBoxes(highlightId) {
+    const allHighlightRects = document.querySelectorAll(".highlight-rect");
+    allHighlightRects.forEach((rect) => rect.classList.remove("active"));
+    allHighlightRects.forEach((rect) => {
+      if (rect.getAttribute("data-highlight-id") === highlightId) {
+        rect.classList.add("active");
+      }
+    });
+  }
+
+  // event Listeners for Buttons
+  document.getElementById("prev-btn").addEventListener("click", async () => {
+    if (currentResumeIndex > 0) {
+      currentResumeIndex--;
+      currentReviewIndex = 0;
+      await render();
+    }
+  });
+
+  document.getElementById("next-btn").addEventListener("click", async () => {
+    if (currentResumeIndex < resumeEntries.length - 1) {
+      currentResumeIndex++;
+      currentReviewIndex = 0;
+      await render();
+    }
+  });
+
+  render();
+</script>
+{% endblock %}

@@ -33,8 +33,10 @@ def signup():
             return redirect(url_for('auth.signup'))
             
         UserService.create_user(email, password, first_name, last_name)
-        flash('Account created successfully. Please log in.')
-        return redirect(url_for('auth.login'))
+        new_user = UserService.get_user_by_email(email)
+        login_user(new_user)
+        flash('Welcome to Pufferfish!')
+        return redirect(url_for('main.index'))
         
     return render_template('auth/signup.html')
 

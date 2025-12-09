@@ -35,7 +35,7 @@ def test_signup_success(client):
     }, follow_redirects=True)
     
     assert response.status_code == 200
-    assert b'Account created successfully' in response.data
+    assert b'Welcome to Pufferfish' in response.data
     
     user = mongo.db.users.find_one({'email': 'test@example.com'})
     assert user is not None

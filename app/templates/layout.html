@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Resume Sharing{% endblock %}</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.violet.min.css"
-    />
-    {% block extra_css %}{% endblock %}
-  </head>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Resume Sharing{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.violet.min.css" />
+  {% block extra_css %}{% endblock %}
+</head>
 
   <body>
     <nav class="container-fluid">
@@ -31,9 +29,6 @@
           <a href="{{ url_for('resume_form.upload_resume') }}">Resume Form</a>
         </li>
         <li>
-          <a href="{{ url_for('feed.feed_home') }}">Feed</a>
-        </li>
-        <li>
           <a href="{{ url_for('resume.store_resume') }}">Store Resume</a>
         </li>
         <li><a href="{{ url_for('profile.profile_home') }}">Profile</a></li>
@@ -52,13 +47,14 @@
       </ul>
     </nav>
 
-    {% block main %}
-    <main class="container">
-      {% with messages = get_flashed_messages() %} {% if messages %} {% for
-      message in messages %}
-      <article class="pico-background-azure-50">{{ message }}</article>
-      {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
-    </main>
-    {% endblock %} {% block extra_js %}{% endblock %}
-  </body>
+  {% block main %}
+  <main class="container">
+    {% with messages = get_flashed_messages() %} {% if messages %} {% for
+    message in messages %}
+    <article class="pico-background-azure-50">{{ message }}</article>
+    {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
+  </main>
+  {% endblock %} {% block extra_js %}{% endblock %}
+</body>
+
 </html>

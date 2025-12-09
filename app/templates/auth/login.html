@@ -3,23 +3,30 @@
 {% block title %}Login - Pufferfish{% endblock %}
 
 {% block content %}
-<article>
-  <header>
-    <h2>Login</h2>
-  </header>
-  <form method="POST">
-    <label for="email">
-      Email
-      <input type="email" id="email" name="email" placeholder="you@example.com" required>
-    </label>
-    <label for="password">
-      Password
-      <input type="password" id="password" name="password" placeholder="Your password" required>
-    </label>
-    <button type="submit">Login</button>
-  </form>
-  <footer>
-    <small>Don't have an account? <a href="{{ url_for('auth.signup') }}">Sign up</a></small>
-  </footer>
-</article>
+<div style="max-width: 400px; margin: 2rem auto;">
+  <article>
+    <header style="text-align: center; padding-bottom: 1rem;">
+      <img src="{{ url_for('static', filename='logo/pufferfish_logo.png') }}" alt="Pufferfish Logo"
+        style="height: 80px; margin-bottom: 1rem;" />
+      <h2 style="margin: 0;">Welcome Back</h2>
+      <p style="color: var(--pico-muted-color); margin-top: 0.5rem;">
+        Sign in to your account
+      </p>
+    </header>
+    <form method="POST">
+      <label for="email">
+        Email
+        <input type="email" id="email" name="email" placeholder="you@example.com" required>
+      </label>
+      <label for="password">
+        Password
+        <input type="password" id="password" name="password" placeholder="Your password" required>
+      </label>
+      <button type="submit" class="contrast">Login</button>
+    </form>
+    <footer style="text-align: center;">
+      <small>Don't have an account? <a href="{{ url_for('auth.signup') }}">Sign up</a></small>
+    </footer>
+  </article>
+</div>
 {% endblock %}

@@ -9,6 +9,7 @@ from flask import (
     url_for,
     send_file,
 )
+from flask_login import current_user
 from app.services.resume_service import ResumeService
 
 resume_bp = Blueprint("resume", __name__)
@@ -25,8 +26,9 @@ def resume_feedback(resume_id):
         return jsonify({"error": "Resume not found"}), 404
 
     return render_template(
-        "resume_viewer.html",
-        document_id=url_for("resume.get_resume_pdf_file", resume_id=resume_id),
+        "resume_feedback.html",
+        document_id=resume_id,
+        pdf_url=url_for("resume.get_resume_pdf_file", resume_id=resume_id),
         page_title=f"Resume Feedback - {doc.get('filename', 'Resume')}",
     )
 
@@ -55,7 +57,13 @@ def save_highlights():
     if not document_id or highlights is None:
         return jsonify({"error": "Missing required fields"}), 400
 
-    ResumeService.save_highlights(document_id, highlights)
+    reviewer_id = None
+    reviewer_name = "Anonymous"
+    if current_user.is_authenticated:
+        reviewer_id = str(current_user.id)
+        reviewer_name = f"{current_user.first_name} {current_user.last_name}"
+
+    ResumeService.save_highlights(document_id, highlights, reviewer_id, reviewer_name)
     return jsonify({"status": "success"}), 200
 
 
@@ -70,7 +78,10 @@ def store_resume():
         elif not file.filename.lower().endswith(".pdf"):
             flash("Only PDF files are supported right now.")
         else:
-            resume_id = ResumeService.save_resume_pdf(file)
+            resume_id = ResumeService.save_resume_pdf(
+                file,
+                user_id=str(current_user.id) if current_user.is_authenticated else None,
+            )
             flash(
                 "Resume stored successfully. Use this ID with /resume/feedback/<resumeId>."
             )

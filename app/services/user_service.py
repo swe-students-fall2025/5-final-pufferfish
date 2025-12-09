@@ -13,7 +13,7 @@ class UserService:
             "first_name": first_name,
             "last_name": last_name,
             "headline": headline,
-            "created_at": datetime.datetime.utcnow()
+            "created_at": datetime.datetime.now(datetime.timezone.utc)
         }
         result = mongo.db.users.insert_one(user_data)
         return str(result.inserted_id)

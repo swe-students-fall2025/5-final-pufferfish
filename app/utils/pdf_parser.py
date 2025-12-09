@@ -127,24 +127,8 @@ def extract_sections(text: str) -> Dict[str, str]:
     return sections
 
 def parse_education(text: str) -> List[Dict[str, Any]]:
-    """
-    Helper to parse education info
-    
-    :param text: text to extract from
-    :type text: str
-    :return: dict containing extracted info
-    :rtype: List[Dict[str, Any]]
-    """
     entries = []
-    # Heuristic: split by lines
-    # Assume groups of lines represent an entry
-    # Look for date patterns to identify new entries?
-    # Or just lines that look like school names?
-    
-    # Simple approach based on sample: School \n Degree \n Date
     lines = [l.strip() for l in text.split('\n') if l.strip()]
-    
-    # We'll group by detecting "University" or "College" or just chunks of 2-3 lines
     
     # Pattern for date range: "Aug. 2018 – May 2021"
     date_pattern = r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z.]*\s+\d{4})\s*–\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z.]*\s+\d{4}|Present)'
@@ -156,15 +140,36 @@ def parse_education(text: str) -> List[Dict[str, Any]]:
         date_match = re.search(date_pattern, line, re.IGNORECASE)
         if date_match:
             if buffer:
-                current_entry['school'] = buffer[0]
-                if len(buffer) > 1:
-                    current_entry['degree'] = " ".join(buffer[1:])
+                # First line in buffer is School + Location
+                school_line = buffer[0]
+                # Heuristic: split by last comma for location? "University Name, City, ST"
+                if ',' in school_line:
+                    parts = school_line.rsplit(',', 2) # Try to split last part
+                    # If the part after comma is short (state code), might be location
+                    # "Georgetown, TX"
+                    if len(parts) >= 2:
+                        # Crude heuristic: if it looks like "City, ST"
+                        current_entry['school'] = school_line.rsplit(',', 2)[0].strip()
+                        current_entry['location'] = school_line[len(current_entry['school']):].strip(', ')
+                    else:
+                        current_entry['school'] = school_line
                 else:
-                    # Maybe degree is on the same line as date?
-                    # "Bachelor of Arts... Aug 2018..."
+                    current_entry['school'] = school_line
+
+                if len(buffer) > 1:
+                    full_degree = " ".join(buffer[1:])
+                else:
                     pre_date = line[:date_match.start()].strip()
-                    if pre_date:
-                        current_entry['degree'] = pre_date
+                    full_degree = pre_date
+                
+                # Split Degree and Field
+                # "Bachelor of Arts in Computer Science" -> Degree: Bachelor of Arts, Field: Computer Science
+                if ' in ' in full_degree:
+                    d, f = full_degree.split(' in ', 1)
+                    current_entry['degree'] = d.strip()
+                    current_entry['field'] = f.split(',')[0].strip() # remove minors if comma separated
+                else:
+                    current_entry['degree'] = full_degree
             
             # Parse dates
             start_str, end_str = date_match.groups()
@@ -182,25 +187,15 @@ def parse_education(text: str) -> List[Dict[str, Any]]:
         else:
             buffer.append(line)
             
-    # Fallback if no dates found, just dump first line as school
     if not entries and buffer:
         entries.append({'school': buffer[0]})
         
     return entries
 
 def parse_experience(text: str) -> List[Dict[str, Any]]:
-    """
-    Helper to parse exp.
-    
-    :param text: text to extract from
-    :type text: str
-    :return: dict containing extracted info
-    :rtype: List[Dict[str, Any]]
-    """
     entries = []
     lines = [l.strip() for l in text.split('\n') if l.strip()]
     
-    # Date pattern again
     date_pattern = r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z.]*\s+\d{4})\s*–\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z.]*\s+\d{4}|Present)'
 
     current_entry = None
@@ -208,13 +203,11 @@ def parse_experience(text: str) -> List[Dict[str, Any]]:
     for line in lines:
         date_match = re.search(date_pattern, line, re.IGNORECASE)
         if date_match:
-            # Start of a new entry
             if current_entry:
                 entries.append(current_entry)
             
             current_entry = {'bullets': []}
             
-            # Parse dates
             start_str, end_str = date_match.groups()
             s_m, s_y = parse_date_str(start_str)
             e_m, e_y = parse_date_str(end_str)
@@ -223,20 +216,27 @@ def parse_experience(text: str) -> List[Dict[str, Any]]:
             current_entry['end_month'] = e_m
             current_entry['end_year'] = e_y
             
-            # Title/Company usually on this line or previous lines?
-            # Sample: "Undergraduate Research Assistant June 2020 – Present"
             pre_date = line[:date_match.start()].strip()
             if pre_date:
                 current_entry['title'] = pre_date
             
         elif current_entry is not None:
-            # Check for bullet points
             if line.startswith('•') or line.startswith('-') or line.startswith('*'):
                 current_entry['bullets'].append(line.lstrip('•-* ').strip())
             elif 'company' not in current_entry and 'location' not in current_entry:
-                 # Assume line after title is Company/Location
-                 # Sample: "Texas A&M University College Station, TX"
-                 current_entry['company'] = line
+                 # "Company Name Location"
+                 # Heuristic: split by last comma or if it looks like a locations
+                 if ',' in line:
+                     parts = line.rsplit(',', 1) # City, ST
+                     possible_loc = parts[1].strip()
+                     # If possible_loc is short (e.g. TX)
+                     if len(possible_loc) < 5: 
+                         current_entry['company'] = parts[0].strip()
+                         current_entry['location'] = line[len(current_entry['company']):].strip(', ')
+                     else:
+                        current_entry['company'] = line
+                 else:
+                    current_entry['company'] = line
             else:
                  pass
                  
@@ -246,9 +246,48 @@ def parse_experience(text: str) -> List[Dict[str, Any]]:
     return entries
 
 def parse_projects(text: str) -> List[Dict[str, Any]]:
-    # Similar to experience but Title might be Project Name
-    # TODO: create logic for parsing projects
-    return parse_experience(text) # Reuse logic for now
+    entries = []
+    lines = [l.strip() for l in text.split('\n') if l.strip()]
+    
+    # Date pattern
+    date_pattern = r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z.]*\s+\d{4})\s*–\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z.]*\s+\d{4}|Present)'
+
+    current_entry = None
+    
+    for line in lines:
+        # Check for date line, usually indicates start of project entry if in projects section
+        date_match = re.search(date_pattern, line, re.IGNORECASE)
+        
+        if date_match:
+            if current_entry:
+                entries.append(current_entry)
+            
+            current_entry = {'bullets': []}
+            
+            # "Gitlytics | Python, Flask..."  Date
+            # The part before date is the Name + Tech Stack (Title)
+            pre_date = line[:date_match.start()].strip()
+            if '|' in pre_date:
+                parts = pre_date.split('|', 1)
+                current_entry['name'] = parts[0].strip()
+                current_entry['title'] = parts[1].strip() # Tech stack as title
+            else:
+                current_entry['name'] = pre_date
+                current_entry['title'] = 'Project' # Default
+            
+        elif current_entry is not None:
+             if line.startswith('•') or line.startswith('-') or line.startswith('*'):
+                 current_entry['bullets'].append(line.lstrip('•-* ').strip())
+             elif not current_entry.get('name'):
+                 # If we haven't found a name yet (maybe date was on next line?)
+                 # But our heuristic assumes date line is key. 
+                 # If no date found yet, maybe this line is the name?
+                 pass
+                 
+    if current_entry:
+        entries.append(current_entry)
+        
+    return entries
 
 def parse_skills(text: str) -> List[Dict[str, Any]]:
     entries = []
