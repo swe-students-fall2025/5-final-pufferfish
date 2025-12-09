@@ -500,7 +500,7 @@ def select_template():
                         "template_name": template['name'],
                         "latex_generated_at": datetime.utcnow(),
                         "pdf_generated_at": datetime.utcnow(),
-                        "resume_path": f"/resume/{resume_id}/preview"
+                        "resume_path": f"/resume/{resume_id}/view-pdf"
                     }
                 }
             )

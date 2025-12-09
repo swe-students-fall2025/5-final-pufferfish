@@ -6,6 +6,13 @@ from app.extensions import mongo
 
 class ResumeService:
     @staticmethod
+    def _validate_db():
+        """Validate that database connection is available."""
+        if not mongo or not hasattr(mongo, 'db') or mongo.db is None:
+            raise RuntimeError("Database connection not available")
+        return True
+    
+    @staticmethod
     def _parse_datetime(value):
         """Parse ISO strings or datetime objects into datetime; returns None on failure."""
         if isinstance(value, datetime):
@@ -38,6 +45,7 @@ class ResumeService:
 
     @staticmethod
     def get_highlights(document_id, reviewer_id=None):
+        ResumeService._validate_db()
         query = {"document_id": document_id}
         if reviewer_id:
             query["reviewer_id"] = reviewer_id
@@ -47,6 +55,7 @@ class ResumeService:
 
     @staticmethod
     def get_all_reviews(document_id):
+        ResumeService._validate_db()
         # returns a list of all review documents for this resume, sorted by first highlight
         cursor = mongo.db.highlights.find({"document_id": document_id}).sort(
             "first_highlight_created_at", 1
@@ -89,6 +98,7 @@ class ResumeService:
     @staticmethod
     def get_user_resumes(user_id):
         """Get all resumes owned by a user (oldest first, so newest is on the right)"""
+        ResumeService._validate_db()
         cursor = mongo.db.resumes.find({"user_id": user_id}).sort("created_at", 1)
         resumes = []
         for doc in cursor:

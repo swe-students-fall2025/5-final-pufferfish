@@ -8,6 +8,15 @@
 {% endblock %}
 
 {% block main %}
+{% if error %}
+<div class="container" style="margin-top: 2rem;">
+  <article style="text-align: center; padding: 2rem;">
+    <h3>Unable to Load Resume Reviews</h3>
+    <p>{{ error }}</p>
+    <p><a href="{{ url_for('resume.store_resume') }}" role="button">Upload a New Resume</a></p>
+  </article>
+</div>
+{% else %}
 <div class="resume-viewer-container" style="margin-top: 20px;">
 
   <!-- Column 1: Previous Button -->
@@ -25,6 +34,13 @@
     <div class="reviewer-header">
       <small id="version-label">Loading version...</small>
       <h5 id="reviewer-name" style="margin:0;">Loading...</h5>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem;">
+        <button id="prev-review-btn" class="secondary outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
+          disabled>&lt; Prev Review</button>
+        <small id="review-count" style="color: var(--pico-muted-color);">-/-</small>
+        <button id="next-review-btn" class="secondary outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
+          disabled>Next Review &gt;</button>
+      </div>
     </div>
 
     <h6>Comments</h6>
@@ -42,8 +58,8 @@
 <script src="{{ url_for('static', filename='js/resume_viewer.js') }}"></script>
 <script>
   /* eslint-disable */
-  const resumeEntries = JSON.parse('{{ resume_entries | tojson | safe }}');
-  const currentResumeId = JSON.parse('{{ current_resume_id | tojson | safe }}');
+  const resumeEntries = {{ resume_entries | tojson | safe }};
+  const currentResumeId = {{ current_resume_id | tojson | safe }};
   let currentResumeIndex = Math.max(
     0,
     resumeEntries.findIndex((r) => r._id === currentResumeId)
@@ -53,7 +69,7 @@
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-  const PDF_SCALE = 1.5;
+  const PDF_SCALE = 1.0;
   let pdfDocument = null;
   let viewerApi = null;
   const pdfCache = new Map();
@@ -65,6 +81,17 @@
       return cached.slice();
     }
     const response = await fetch(url);
+
+    // Check if the response is actually a PDF
+    if (!response.ok) {
+      throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (contentType && !contentType.includes('application/pdf')) {
+      throw new Error(`Expected PDF but got ${contentType}. The resume file may not be uploaded correctly.`);
+    }
+
     const buffer = await response.arrayBuffer();
     const data = new Uint8Array(buffer);
     pdfCache.set(url, data);
@@ -94,6 +121,24 @@
     versionLabel.textContent = `${entry.title || "Resume"} (${currentResumeIndex + 1}/${resumeEntries.length})`;
     prevBtn.disabled = currentResumeIndex === 0;
     nextBtn.disabled = currentResumeIndex === resumeEntries.length - 1;
+  }
+  // added button to navigate thru comments by diff reviewers
+  function updateReviewNavigation() {
+    const reviews = getCurrentReviews();
+    const prevReviewBtn = document.getElementById("prev-review-btn");
+    const nextReviewBtn = document.getElementById("next-review-btn");
+    const reviewCountEl = document.getElementById("review-count");
+
+    if (reviews.length === 0) {
+      prevReviewBtn.disabled = true;
+      nextReviewBtn.disabled = true;
+      reviewCountEl.textContent = "0/0";
+      return;
+    }
+
+    reviewCountEl.textContent = `${currentReviewIndex + 1}/${reviews.length}`;
+    prevReviewBtn.disabled = currentReviewIndex === 0;
+    nextReviewBtn.disabled = currentReviewIndex === reviews.length - 1;
   }
 
   // helper to create highlight rectangles
@@ -183,23 +228,37 @@
       return;
     }
 
-    const pdfData = await getPdfData(entry.resume_path);
+    try {
+      const pdfData = await getPdfData(entry.resume_path);
 
-    viewerApi = createResumeViewer({
-      pdfData,
-      scale: PDF_SCALE,
-      renderHighlightsForPage: (pageNum, viewport, highlightLayer) =>
-        renderHighlights(pageNum, viewport, highlightLayer),
-    });
+      viewerApi = createResumeViewer({
+        pdfData,
+        scale: PDF_SCALE,
+        renderHighlightsForPage: (pageNum, viewport, highlightLayer) =>
+          renderHighlights(pageNum, viewport, highlightLayer),
+      });
 
-    await viewerApi.render();
-    pdfDocument = viewerApi.getDocument();
+      await viewerApi.render();
+      pdfDocument = viewerApi.getDocument();
 
-    // initial UI state
-    updateReviewerDisplay();
-    updateVersionDisplay();
+      // initial UI state
+      updateReviewerDisplay();
+      updateVersionDisplay();
+      updateReviewNavigation();
+    } catch (error) {
+      console.error("Error loading PDF:", error);
+      const viewer = document.getElementById("viewer");
+      if (viewer) {
+        viewer.innerHTML = `
+          <div style="padding: 2rem; text-align: center;">
+            <h3>Unable to Load Resume</h3>
+            <p style="color: var(--pico-muted-color);">${error.message || 'The PDF file could not be loaded.'}</p>
+            <p style="margin-top: 1rem; font-size: 0.875rem;">This resume may not have a PDF file uploaded. Please upload the resume again.</p>
+          </div>
+        `;
+      }
+    }
   }
-
   // update the UI for the current reviewer
   function updateReviewerDisplay() {
     const reviewerNameEl = document.getElementById("reviewer-name");
@@ -333,6 +392,24 @@
     }
   });
 
+  // Review navigation buttons
+  document.getElementById("prev-review-btn").addEventListener("click", () => {
+    const reviews = getCurrentReviews();
+    if (currentReviewIndex > 0) {
+      currentReviewIndex--;
+      updateReviewerDisplay();
+    }
+  });
+
+  document.getElementById("next-review-btn").addEventListener("click", () => {
+    const reviews = getCurrentReviews();
+    if (currentReviewIndex < reviews.length - 1) {
+      currentReviewIndex++;
+      updateReviewerDisplay();
+    }
+  });
+
   render();
 </script>
+{% endif %}
 {% endblock %}
