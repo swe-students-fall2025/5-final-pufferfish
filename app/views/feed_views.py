@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request
 from flask_login import login_required
 from app.extensions import mongo
-from bson import ObjectId
 
 feed_bp = Blueprint("feed", __name__)
 
