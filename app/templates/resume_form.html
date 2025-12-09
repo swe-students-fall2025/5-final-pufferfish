@@ -13,6 +13,20 @@
 
   <form id="resumeForm" method="POST" action="{{ url_for('resume_form.resume_form') }}" {% if prefill_data
     %}data-is-prefilled="true" {% endif %}>
+    <!-- Resume Title/Version -->
+    <section class="form-section">
+      <h2 class="section-title">Resume Title/Version</h2>
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label for="resume_title">Resume Title/Version Name:<span class="required">*</span></label>
+          <input type="text" id="resume_title" name="resume_title" 
+            value="{{ prefill_data.get('resume_title', '') }}"
+            placeholder="e.g., Software Engineer Resume v1, Tech Industry Resume, etc." required>
+          <small style="color: #666; font-size: 0.9em;">Give your resume a name or version to help you organize multiple resumes.</small>
+        </div>
+      </div>
+    </section>
+
     <!-- Personal Contact Info -->
     <section class="form-section">
       <h2 class="section-title">Personal Contact Info</h2>
@@ -74,7 +88,7 @@
       <h2 class="section-title">School Info:</h2>
       {% set education_list = prefill_data.get('education', []) %}
       {% if not education_list %}{% set education_list = [{'school': '', 'location': '', 'degree': '', 'field':
-      '', 'graduation_month': '', 'graduation_year': ''}] %}{% endif %}
+      '', 'graduation_month': '', 'graduation_year': '', 'coursework': '', 'activities': ''}] %}{% endif %}
 
       {% for edu in education_list %}
       <div class="education-entry" data-index="{{ loop.index0 }}">
@@ -116,6 +130,18 @@
               <input type="number" name="education_{{ loop.index0 }}_graduation_year" class="date-input"
                 placeholder="Year" min="1900" max="2100" value="{{ edu.end_year|default('') }}">
             </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Coursework (optional):</label>
+            <input type="text" name="education_{{ loop.index0 }}_coursework" value="{{ edu.coursework|default('') }}"
+              placeholder="e.g., Data Structures, Algorithms, Database Systems">
+          </div>
+          <div class="form-group">
+            <label>Activities (optional):</label>
+            <input type="text" name="education_{{ loop.index0 }}_activities" value="{{ edu.activities|default('') }}"
+              placeholder="e.g., Student Council, Coding Club, Research Assistant">
           </div>
         </div>
       </div>
@@ -245,7 +271,7 @@
     <section class="form-section" id="projectsSection">
       <h2 class="section-title">Project/Research</h2>
       {% set projects_list = prefill_data.get('projects', []) %}
-      {% if not projects_list %}{% set projects_list = [{'title': '', 'name': '', 'bullets': ['']}] %}{% endif %}
+      {% if not projects_list %}{% set projects_list = [{'title': '', 'skills': '', 'bullets': ['']}] %}{% endif %}
 
       {% for project in projects_list %}
       <div class="project-entry" data-index="{{ loop.index0 }}">
@@ -254,10 +280,12 @@
             <label>Title:</label>
             <input type="text" name="project_{{ loop.index0 }}_title" value="{{ project.title|default('') }}">
           </div>
-          <div class="form-group">
-            <label>Name:</label>
-            <input type="text" name="project_{{ loop.index0 }}_name" value="{{ project.name|default('') }}"
-              placeholder="e.g., CS Senior Capstone, Personal Project">
+        </div>
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>Skills/Tools Used (optional):</label>
+            <input type="text" name="project_{{ loop.index0 }}_skills" value="{{ project.skills|default('') }}"
+              placeholder="e.g., Python, Flask, React, Docker">
           </div>
         </div>
         <div class="bullets-container" data-entry-index="{{ loop.index0 }}">
@@ -367,6 +395,16 @@
                     </select>
                     <input type="number" name="education_${newIndex}_graduation_year" class="date-input" placeholder="Year" min="1900" max="2100">
                 </div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Coursework (optional):</label>
+                <input type="text" name="education_${newIndex}_coursework" placeholder="e.g., Data Structures, Algorithms, Database Systems">
+            </div>
+            <div class="form-group">
+                <label>Activities (optional):</label>
+                <input type="text" name="education_${newIndex}_activities" placeholder="e.g., Student Council, Coding Club, Research Assistant">
             </div>
         </div>
         <button type="button" class="btn btn-small" onclick="removeEntry(this, 'education')">Remove</button>
@@ -535,9 +573,11 @@
                 <label>Title:</label>
                 <input type="text" name="project_${newIndex}_title">
             </div>
-            <div class="form-group">
-                <label>Name:</label>
-                <input type="text" name="project_${newIndex}_name" placeholder="e.g., CS Senior Capstone, Personal Project">
+        </div>
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label>Skills/Tools Used (optional):</label>
+                <input type="text" name="project_${newIndex}_skills" placeholder="e.g., React, Express.js, Python, MongoDB">
             </div>
         </div>
         <div class="bullets-container" data-entry-index="${newIndex}">

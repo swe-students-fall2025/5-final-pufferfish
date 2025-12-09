@@ -216,3 +216,47 @@ class ResumeService:
         fs = GridFS(mongo.db)
         file_obj = fs.get(doc["file_id"])
         return doc, file_obj
+
+    @staticmethod
+    def save_resume_structured_data(structured_data, user_id=None, title=None):
+        """Store structured resume data in MongoDB.
+        
+        Args:
+            structured_data: Dictionary containing structured resume data
+            user_id: Optional user ID to associate with the resume
+            title: Optional title for the resume
+            
+        Returns:
+            str: The resume_id (MongoDB _id as string)
+        """
+        doc = {
+            "structured_data": structured_data,
+            "created_at": datetime.utcnow(),
+        }
+
+        if user_id:
+            doc["user_id"] = str(user_id)
+        if title:
+            doc["title"] = title
+
+        result = mongo.db.resumes.insert_one(doc)
+        resume_id = str(result.inserted_id)
+
+        if user_id:
+            ResumeService.set_current_resume_for_user(user_id, resume_id)
+
+        return resume_id
+
+    @staticmethod
+    def get_resume_structured_data(resume_id):
+        """Fetch structured resume data by resumeId."""
+        try:
+            object_id = ObjectId(resume_id)
+        except (bson_errors.InvalidId, TypeError):
+            return None
+
+        doc = mongo.db.resumes.find_one({"_id": object_id})
+        if not doc:
+            return None
+
+        return doc.get("structured_data")
