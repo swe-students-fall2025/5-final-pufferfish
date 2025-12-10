@@ -146,6 +146,7 @@
               placeholder="e.g., Student Council, Coding Club, Research Assistant">
           </div>
         </div>
+        <button type="button" class="btn btn-small" onclick="removeEntry(this, 'education')">Remove</button>
       </div>
       {% endfor %}
       <button type="button" class="secondary outline" id="addEducation">Add another education</button>
@@ -239,6 +240,7 @@
         </div>
         <button type="button" class="secondary outline small-btn" data-entry-index="{{ loop.index0 }}"
           data-entry-type="experience" onclick="addBulletPoint(this)">Add bullet point</button>
+        <button type="button" class="btn btn-small" onclick="removeEntry(this, 'experience')">Remove Experience</button>
       </div>
       {% endfor %}
       <button type="button" class="secondary outline" id="addExperience">Add Experience</button>
@@ -264,6 +266,7 @@
               placeholder="Comma-separated list (e.g., Python, Java, JavaScript)">
           </div>
         </div>
+        <button type="button" class="btn btn-small" onclick="removeEntry(this, 'skill')">Remove</button>
       </div>
       {% endfor %}
       <button type="button" class="secondary outline" id="addSkill">Add skill</button>
@@ -311,6 +314,7 @@
         <button type="button" class="secondary outline small-btn" data-entry-index="{{ loop.index0 }}"
           data-entry-type="project" onclick="addBulletPoint(this)">Add
           bullet point</button>
+        <button type="button" class="btn btn-small" onclick="removeEntry(this, 'project')">Remove Project</button>
       </div>
       {% endfor %}
       <button type="button" class="secondary outline" id="addProject">Add Project/experience</button>
