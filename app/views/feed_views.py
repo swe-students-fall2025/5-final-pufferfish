@@ -16,27 +16,13 @@ def feed_home():
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
 
-    # Get all users' current_resume_id values (only users who have a current resume)
-    users_with_resumes = mongo.db.users.find(
-        {"current_resume_id": {"$ne": None}}, {"current_resume_id": 1}
-    )
-    current_resume_ids = [
-        (
-            ObjectId(u["current_resume_id"])
-            if isinstance(u["current_resume_id"], str)
-            else u["current_resume_id"]
-        )
-        for u in users_with_resumes
-        if u.get("current_resume_id")
-    ]
-
-    # Build MongoDB filter - only include current resumes
-    filters = {"_id": {"$in": current_resume_ids}}
+    # Build MongoDB filter
+    filters = {}
 
     if query:
         filters["$text"] = {"$search": query}
 
-    # Get only current resumes from MongoDB
+    # Get all resumes from MongoDB
     skip = (page - 1) * per_page
     resumes_cursor = (
         mongo.db.resumes.find(filters).sort("created_at", -1).skip(skip).limit(per_page)
