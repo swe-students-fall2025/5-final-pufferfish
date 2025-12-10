@@ -42,6 +42,33 @@ def feed_home():
         if len(skills_str) > 50:
             skills_str = skills_str[:50] + "..."
 
+        # Safe extraction for experience level and location
+        experience_level = "N/A"
+        exp_list = structured_data.get("experience", [])
+        if isinstance(exp_list, list) and len(exp_list) > 0:
+            item = exp_list[0]
+            if isinstance(item, dict):
+                role = item.get("role", "")
+                company = item.get("company", "")
+                if role and company:
+                    experience_level = f"{role} at {company}"
+                elif role:
+                    experience_level = role
+                elif company:
+                    experience_level = company
+
+        location = ""
+        edu_list = structured_data.get("education", [])
+        if isinstance(edu_list, list) and len(edu_list) > 0:
+            item = edu_list[0]
+            if isinstance(item, dict):
+                location = item.get("location", "")
+
+        if not location and isinstance(exp_list, list) and len(exp_list) > 0:
+            item = exp_list[0]
+            if isinstance(item, dict):
+                location = item.get("location", "")
+
         resumes.append(
             {
                 "_id": str(r.get("_id")),
@@ -50,16 +77,8 @@ def feed_home():
                 "title": r.get("title", structured_data.get("name", "Untitled")),
                 "summary": structured_data.get("professional_summary", ""),
                 "skills": skills_str,
-                "experience_level": (
-                    f"{structured_data.get('experience', [{}])[0].get('role', '')} at {structured_data.get('experience', [{}])[0].get('company', '')}"
-                    if structured_data.get("experience")
-                    else "N/A"
-                ),
-                "location": (
-                    structured_data.get("education", [{}])[0].get("location")
-                    or structured_data.get("experience", [{}])[0].get("location")
-                    or ""
-                ),
+                "experience_level": experience_level,
+                "location": location or "N/A",
             }
         )
 

@@ -104,6 +104,7 @@ def parse_form_data_to_structured(form_data):
     for i in range(experience_count):
         company = form_data.get(f"experience_{i}_company", "").strip()
         title = form_data.get(f"experience_{i}_title", "").strip()
+        location = form_data.get(f"experience_{i}_location", "").strip()
         if not company or not title:
             continue
 
