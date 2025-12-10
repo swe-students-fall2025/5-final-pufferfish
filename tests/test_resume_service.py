@@ -269,7 +269,9 @@ class TestGetHighlights:
                                 "id": "hl_1",
                                 "comment": "Great section!",
                                 "text": "Experience",
-                                "rects": [{"x": 10, "y": 20, "width": 100, "height": 12}],
+                                "rects": [
+                                    {"x": 10, "y": 20, "width": 100, "height": 12}
+                                ],
                             }
                         ]
                     },
@@ -291,18 +293,24 @@ class TestGetHighlights:
                     {
                         "document_id": "resume_1",
                         "reviewer_id": "reviewer_1",
-                        "highlights": {"1": [{"id": "hl_1", "comment": "From reviewer 1"}]},
+                        "highlights": {
+                            "1": [{"id": "hl_1", "comment": "From reviewer 1"}]
+                        },
                     },
                     {
                         "document_id": "resume_1",
                         "reviewer_id": "reviewer_2",
-                        "highlights": {"1": [{"id": "hl_2", "comment": "From reviewer 2"}]},
+                        "highlights": {
+                            "1": [{"id": "hl_2", "comment": "From reviewer 2"}]
+                        },
                     },
                 ]
             )
 
             # Get highlights for specific reviewer
-            highlights = ResumeService.get_highlights("resume_1", reviewer_id="reviewer_1")
+            highlights = ResumeService.get_highlights(
+                "resume_1", reviewer_id="reviewer_1"
+            )
 
             assert highlights["1"][0]["comment"] == "From reviewer 1"
 
@@ -323,7 +331,9 @@ class TestGetHighlights:
                 }
             )
 
-            highlights = ResumeService.get_highlights("resume_1", reviewer_id="other_reviewer")
+            highlights = ResumeService.get_highlights(
+                "resume_1", reviewer_id="other_reviewer"
+            )
             assert highlights == {}
 
 
@@ -404,7 +414,14 @@ class TestSaveHighlights:
         """Test saving highlights without a reviewer_id (anonymous)."""
         with app.app_context():
             highlights = {
-                "1": [{"id": "hl_1", "comment": "Anonymous comment", "text": "Test", "rects": []}]
+                "1": [
+                    {
+                        "id": "hl_1",
+                        "comment": "Anonymous comment",
+                        "text": "Test",
+                        "rects": [],
+                    }
+                ]
             }
 
             ResumeService.save_highlights(
@@ -424,11 +441,35 @@ class TestSaveHighlights:
         """Test saving highlights across multiple pages."""
         with app.app_context():
             highlights = {
-                "1": [{"id": "hl_1", "comment": "Page 1 comment", "text": "Text1", "rects": []}],
-                "2": [{"id": "hl_2", "comment": "Page 2 comment", "text": "Text2", "rects": []}],
+                "1": [
+                    {
+                        "id": "hl_1",
+                        "comment": "Page 1 comment",
+                        "text": "Text1",
+                        "rects": [],
+                    }
+                ],
+                "2": [
+                    {
+                        "id": "hl_2",
+                        "comment": "Page 2 comment",
+                        "text": "Text2",
+                        "rects": [],
+                    }
+                ],
                 "3": [
-                    {"id": "hl_3a", "comment": "Page 3 first", "text": "Text3a", "rects": []},
-                    {"id": "hl_3b", "comment": "Page 3 second", "text": "Text3b", "rects": []},
+                    {
+                        "id": "hl_3a",
+                        "comment": "Page 3 first",
+                        "text": "Text3a",
+                        "rects": [],
+                    },
+                    {
+                        "id": "hl_3b",
+                        "comment": "Page 3 second",
+                        "text": "Text3b",
+                        "rects": [],
+                    },
                 ],
             }
 
@@ -452,7 +493,14 @@ class TestSaveHighlights:
                 {"x": 72.5, "y": 165.0, "width": 180.0, "height": 14.5},
             ]
             highlights = {
-                "1": [{"id": "hl_1", "comment": "Multi-line", "text": "Long text", "rects": rects}]
+                "1": [
+                    {
+                        "id": "hl_1",
+                        "comment": "Multi-line",
+                        "text": "Long text",
+                        "rects": rects,
+                    }
+                ]
             }
 
             ResumeService.save_highlights(

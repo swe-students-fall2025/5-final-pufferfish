@@ -12,8 +12,10 @@ def resume_reviews_home():
     """Display the user's resume and all comments made on it."""
     try:
         # Validate database connection
-        if not mongo or not hasattr(mongo, 'db') or mongo.db is None:
-            current_app.logger.error("MongoDB connection not available in resume_reviews_home")
+        if not mongo or not hasattr(mongo, "db") or mongo.db is None:
+            current_app.logger.error(
+                "MongoDB connection not available in resume_reviews_home"
+            )
             flash("Database connection error. Please try again later.", "error")
             return render_template(
                 "resume_reviews.html",
@@ -22,7 +24,7 @@ def resume_reviews_home():
                 resume_entries=[],
                 current_resume_id="",
             )
-        
+
         # Fetch user's resume entries with error handling
         resume_entries = ResumeService.get_user_resume_entries(current_user.id)
 
@@ -44,7 +46,7 @@ def resume_reviews_home():
             resume_entries=resume_entries,
             current_resume_id=current_resume_id,
         )
-    
+
     except Exception as e:
         current_app.logger.error(f"Error loading resume reviews: {str(e)}")
         flash("An error occurred while loading your resumes.", "error")
@@ -55,4 +57,3 @@ def resume_reviews_home():
             resume_entries=[],
             current_resume_id="",
         )
-

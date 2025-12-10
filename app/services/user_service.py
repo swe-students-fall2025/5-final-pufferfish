@@ -3,17 +3,18 @@ from app.models.user import User
 from bson import ObjectId
 import datetime
 
+
 class UserService:
     @staticmethod
     def create_user(email, password, first_name, last_name, headline=""):
-        password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+        password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
         user_data = {
             "email": email,
             "password_hash": password_hash,
             "first_name": first_name,
             "last_name": last_name,
             "headline": headline,
-            "created_at": datetime.datetime.now(datetime.timezone.utc)
+            "created_at": datetime.datetime.now(datetime.timezone.utc),
         }
         result = mongo.db.users.insert_one(user_data)
         return str(result.inserted_id)

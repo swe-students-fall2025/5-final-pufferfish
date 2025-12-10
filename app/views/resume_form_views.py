@@ -632,7 +632,11 @@ def select_template():
             session.pop("uploaded_pdf_filename", None)
 
             flash(f"Resume generated! Please review and save.")
-            return redirect(url_for("resume_form.preview_resume", resume_id=resume_id, mode="preview"))
+            return redirect(
+                url_for(
+                    "resume_form.preview_resume", resume_id=resume_id, mode="preview"
+                )
+            )
 
         except Exception as e:
             print(f"Error generating LaTeX: {e}")
@@ -685,9 +689,9 @@ def edit_resume(resume_id):
 
         # Convert structured data back to form format
         prefill_data = convert_structured_to_form_data(structured_data)
-        
+
         # Explicitly add title from document to prefill data
-        prefill_data['resume_title'] = resume_doc.get('title', '')
+        prefill_data["resume_title"] = resume_doc.get("title", "")
 
         # Store resume_id in session so after editing, they can go back to template selection
         session["current_resume_id"] = resume_id
@@ -735,7 +739,7 @@ def preview_resume(resume_id):
             return redirect(url_for("resume_form.resume_form"))
 
         template_name = resume_doc.get("template_name", "Unknown Template")
-        
+
         # Check if we are in preview mode
         mode = request.args.get("mode")
         if mode == "preview":
@@ -743,7 +747,10 @@ def preview_resume(resume_id):
             template_name = resume_doc.get("preview_template_name", template_name)
 
         return render_template(
-            "resume_preview.html", resume_id=resume_id, template_name=template_name, mode=mode
+            "resume_preview.html",
+            resume_id=resume_id,
+            template_name=template_name,
+            mode=mode,
         )
 
     except Exception as e:
@@ -761,11 +768,11 @@ def save_resume_selection(resume_id):
     if not current_user.is_authenticated:
         flash("Please log in to save your resume.")
         return redirect(url_for("auth.login"))
-        
+
     from bson import ObjectId
     from app.extensions import mongo
     from datetime import datetime, timezone
-    
+
     try:
         # Get resume document
         resume_doc = mongo.db.resumes.find_one({"_id": ObjectId(resume_id)})
@@ -777,53 +784,54 @@ def save_resume_selection(resume_id):
         if str(resume_doc.get("user_id")) != str(current_user.id):
             flash("You do not have permission to modify this resume.")
             return redirect(url_for("resume_form.resume_form"))
-            
+
         # Check if we have preview fields
         preview_file_id = resume_doc.get("preview_file_id")
         if not preview_file_id:
             flash("No preview found to save. Please select a template again.")
             return redirect(url_for("resume_form.select_template"))
-            
+
         # Promote preview fields to official fields
         update_data = {
             "file_id": preview_file_id,
             "template_id": resume_doc.get("preview_template_id", "uploaded"),
             "template_name": resume_doc.get("preview_template_name", "Unknown"),
-            "pdf_generated_at": resume_doc.get("preview_generated_at", datetime.now(timezone.utc)),
+            "pdf_generated_at": resume_doc.get(
+                "preview_generated_at", datetime.now(timezone.utc)
+            ),
             "resume_path": f"/resume/{resume_id}/pdf",
         }
-        
+
         # Optional: update latex_file_id if it exists
         if resume_doc.get("preview_latex_file_id"):
             update_data["latex_file_id"] = resume_doc.get("preview_latex_file_id")
             update_data["latex_generated_at"] = resume_doc.get("preview_generated_at")
-            
+
         # Clear preview fields
         unset_data = {
             "preview_file_id": "",
             "preview_latex_file_id": "",
             "preview_template_id": "",
             "preview_template_name": "",
-            "preview_generated_at": ""
+            "preview_generated_at": "",
         }
-        
+
         mongo.db.resumes.update_one(
-            {"_id": ObjectId(resume_id)},
-            {
-                "$set": update_data,
-                "$unset": unset_data
-            }
+            {"_id": ObjectId(resume_id)}, {"$set": update_data, "$unset": unset_data}
         )
-        
+
         flash("Resume saved successfully!")
         return redirect(url_for("resume_form.preview_resume", resume_id=resume_id))
-        
+
     except Exception as e:
         print(f"Error saving resume selection: {e}")
         import traceback
+
         traceback.print_exc()
         flash("Error saving resume.")
-        return redirect(url_for("resume_form.preview_resume", resume_id=resume_id, mode="preview"))
+        return redirect(
+            url_for("resume_form.preview_resume", resume_id=resume_id, mode="preview")
+        )
 
 
 @resume_form_bp.route("/resume/<resume_id>/pdf/download", methods=["GET"])

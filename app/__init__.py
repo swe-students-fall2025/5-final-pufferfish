@@ -3,20 +3,22 @@ from app.config import Config
 from app.extensions import mongo, login_manager, bcrypt
 from app.services.user_service import UserService
 
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
     # Set secret key for sessions
     import os
-    app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+    app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
 
     #  Extensions
     mongo.init_app(app)
     login_manager.init_app(app)
     bcrypt.init_app(app)
 
-    login_manager.login_view = 'auth.login'
+    login_manager.login_view = "auth.login"
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -25,10 +27,11 @@ def create_app(config_class=Config):
     # Error handlers
     @app.errorhandler(500)
     def internal_error(error):
-        app.logger.error(f'Internal Server Error: {str(error)}', exc_info=True)
+        app.logger.error(f"Internal Server Error: {str(error)}", exc_info=True)
         from flask import render_template, flash, redirect, url_for
-        flash('An internal server error occurred. Please try again later.')
-        return redirect(url_for('main.index'))
+
+        flash("An internal server error occurred. Please try again later.")
+        return redirect(url_for("main.index"))
 
     # Blueprints - import all blueprints
     from app.views.auth_views import auth_bp
@@ -48,9 +51,7 @@ def create_app(config_class=Config):
 
     # mongo
     try:
-        mongo.db.resumes.create_index([
-            ('$**', 'text')
-        ])
+        mongo.db.resumes.create_index([("$**", "text")])
     except Exception as e:
         app.logger.warning(f"Could not create text index on 'resumes' collection: {e}")
     return app

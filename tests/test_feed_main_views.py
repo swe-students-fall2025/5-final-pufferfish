@@ -392,7 +392,9 @@ class TestResumeViews:
     def test_post_highlights_requires_login(self, client):
         """Test POST /api/highlights requires authentication."""
         response = client.post(
-            "/api/highlights", json={"documentId": "test", "highlights": {}}, content_type="application/json"
+            "/api/highlights",
+            json={"documentId": "test", "highlights": {}},
+            content_type="application/json",
         )
         assert response.status_code == 302
 
