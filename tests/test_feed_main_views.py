@@ -356,14 +356,27 @@ class TestFeedViews:
 class TestResumeViews:
     """Tests for resume views including feedback and storage."""
 
+    def test_resume_feedback_requires_login(self, client):
+        """Test that resume feedback route requires authentication."""
+        response = client.get("/resume/feedback/someid123")
+        assert response.status_code == 302
+        assert "/login" in response.headers["Location"]
+
     def test_resume_feedback_requires_valid_id(self, client):
         """Test that resume feedback route handles missing resume."""
+        create_test_user(client)
         response = client.get("/resume/feedback/nonexistent123")
         # Should return 404 or error
         assert response.status_code in [404, 400, 200]
 
+    def test_get_highlights_requires_login(self, client):
+        """Test GET /api/highlights requires authentication."""
+        response = client.get("/api/highlights?documentId=test123")
+        assert response.status_code == 302
+
     def test_get_highlights_no_document_id(self, client):
         """Test GET /api/highlights without documentId."""
+        create_test_user(client)
         response = client.get("/api/highlights")
         assert response.status_code == 400
         assert (
@@ -372,11 +385,20 @@ class TestResumeViews:
 
     def test_get_highlights_with_document_id(self, client):
         """Test GET /api/highlights with documentId."""
+        create_test_user(client)
         response = client.get("/api/highlights?documentId=test123")
         assert response.status_code == 200
 
+    def test_post_highlights_requires_login(self, client):
+        """Test POST /api/highlights requires authentication."""
+        response = client.post(
+            "/api/highlights", json={"documentId": "test", "highlights": {}}, content_type="application/json"
+        )
+        assert response.status_code == 302
+
     def test_post_highlights_missing_fields(self, client):
         """Test POST /api/highlights with missing fields."""
+        create_test_user(client)
         response = client.post(
             "/api/highlights", json={}, content_type="application/json"
         )
