@@ -26,6 +26,7 @@ TEMPLATES = [
         "name": "Jake Template",
         "description": "A clean and professional template with a traditional layout. Perfect for academic and technical positions.",
         "preview_path": "templates/jake/preview.pdf",
+        "preview_image": "templates/jake/preview.png",
         "template_path": "templates/jake/template.tex",
     },
     {
@@ -33,6 +34,7 @@ TEMPLATES = [
         "name": "Harshibar Template",
         "description": "A modern template with a sleek design. Great for creative and tech industry positions.",
         "preview_path": "templates/harshibar/preview.pdf",
+        "preview_image": "templates/harshibar/preview.png",
         "template_path": "templates/harshibar/template.tex",
     },
 ]
@@ -54,6 +56,7 @@ def parse_form_data_to_structured(form_data):
         "phone_number": form_data.get("phone", ""),
         "LinkedIn": form_data.get("linkedin", ""),
         "Website": form_data.get("website", ""),
+        "professional_summary": form_data.get("introduction", ""),
         "education": [],
         "experience": [],
         "skills": [],
@@ -101,6 +104,7 @@ def parse_form_data_to_structured(form_data):
     for i in range(experience_count):
         company = form_data.get(f"experience_{i}_company", "").strip()
         title = form_data.get(f"experience_{i}_title", "").strip()
+        location = form_data.get(f"experience_{i}_location", "").strip()
         if not company or not title:
             continue
 
@@ -225,6 +229,7 @@ def convert_structured_to_form_data(structured_data):
         "phone": structured_data.get("phone_number", ""),
         "linkedin": structured_data.get("LinkedIn", ""),
         "website": structured_data.get("Website", ""),
+        "introduction": structured_data.get("professional_summary", ""),
         "education": [],
         "experience": [],
         "skills": [],
@@ -365,10 +370,38 @@ def resume_form():
             # Store resume_id in session for template selection
             session["current_resume_id"] = resume_id
 
-            flash(f"Resume saved successfully! Please choose a template.")
+            # If user uploaded a PDF, set it as the default
+            # They can still change to a template on the next page
+            uploaded_pdf_file_id = session.get("uploaded_pdf_file_id")
+            uploaded_pdf_filename = session.get("uploaded_pdf_filename")
+
+            if uploaded_pdf_file_id:
+                from bson import ObjectId
+                from app.extensions import mongo
+
+                mongo.db.resumes.update_one(
+                    {"_id": ObjectId(resume_id)},
+                    {
+                        "$set": {
+                            "file_id": ObjectId(uploaded_pdf_file_id),
+                            "filename": uploaded_pdf_filename,
+                            "content_type": "application/pdf",
+                            "template_id": "uploaded",
+                            "template_name": "Uploaded PDF",
+                            "resume_path": f"/resume/{resume_id}/pdf",
+                        }
+                    },
+                )
+
+            flash(
+                "Resume saved successfully! Please choose a template or use your uploaded PDF."
+            )
             return redirect(url_for("resume_form.select_template"))
         except Exception as e:
             print(f"Error saving resume: {e}")
+            import traceback
+
+            traceback.print_exc()
             flash("Error saving resume. Please try again.")
             return redirect(url_for("resume_form.resume_form"))
 
@@ -378,7 +411,7 @@ def resume_form():
 
 @resume_form_bp.route("/resume/upload", methods=["GET", "POST"])
 def upload_resume():
-    """Upload resume page - allows uploading PDF to prefill form."""
+    """Upload resume page - allows uploading PDF to prefill form and store in MongoDB."""
     if not current_user.is_authenticated:
         flash("Please log in to upload a resume.")
         return redirect(url_for("auth.login"))
@@ -396,18 +429,42 @@ def upload_resume():
 
         if file and file.filename.lower().endswith(".pdf"):
             try:
-                # Parse the PDF
+                from gridfs import GridFS
+                from app.extensions import mongo
+
+                # Read the PDF content once
                 file.stream.seek(0)
-                extracted_data = parse_resume_pdf(file.stream)
+                pdf_content = file.read()
+
+                # Store the PDF in GridFS
+                fs = GridFS(mongo.db)
+                uploaded_pdf_file_id = fs.put(
+                    pdf_content,
+                    filename=file.filename,
+                    content_type=file.mimetype or "application/pdf",
+                )
+
+                # Store the file_id and filename in session for later association with form data
+                session["uploaded_pdf_file_id"] = str(uploaded_pdf_file_id)
+                session["uploaded_pdf_filename"] = file.filename
+
+                # Parse the PDF for form prefill using a BytesIO stream
+                pdf_stream = io.BytesIO(pdf_content)
+                extracted_data = parse_resume_pdf(pdf_stream)
                 flash(
-                    "Resume parsed successfully! Please review the prefilled information."
+                    "Resume uploaded and parsed successfully! Please review the prefilled information."
                 )
 
                 # Render the form with prefilled data
                 return render_template("resume_form.html", prefill_data=extracted_data)
             except Exception as e:
-                print(f"Error parsing PDF: {e}")
-                flash("Error parsing PDF. Please try again or fill the form manually.")
+                print(f"Error processing PDF: {e}")
+                import traceback
+
+                traceback.print_exc()
+                flash(
+                    "Error processing PDF. Please try again or fill the form manually."
+                )
                 return redirect(request.url)
         else:
             flash("Invalid file type. Please upload a PDF.")
@@ -437,17 +494,67 @@ def select_template():
     if request.method == "POST":
         template_id = request.form.get("template_id")
 
-        # Validate template ID
-        template = next((t for t in TEMPLATES if t["id"] == template_id), None)
-        if not template:
-            flash("Invalid template selected.")
-            return redirect(url_for("resume_form.select_template"))
-
         # Get resume_id from session
         resume_id = session.get("current_resume_id")
         if not resume_id:
             flash("Resume data not found. Please fill out the form again.")
             return redirect(url_for("resume_form.resume_form"))
+
+        from gridfs import GridFS
+        from app.extensions import mongo
+        from datetime import datetime
+        from bson import ObjectId
+
+        # Check if user chose to use their uploaded PDF
+        if template_id == "uploaded_pdf":
+            # Use the uploaded PDF from session
+            uploaded_pdf_file_id = session.get("uploaded_pdf_file_id")
+            uploaded_pdf_filename = session.get("uploaded_pdf_filename")
+
+            if not uploaded_pdf_file_id:
+                flash(
+                    "No uploaded PDF found. Please upload a resume or select a template."
+                )
+                return redirect(url_for("resume_form.select_template"))
+
+            try:
+                # Update resume document to use the uploaded PDF as the final resume
+                mongo.db.resumes.update_one(
+                    {"_id": ObjectId(resume_id)},
+                    {
+                        "$set": {
+                            "file_id": ObjectId(uploaded_pdf_file_id),
+                            "filename": uploaded_pdf_filename,
+                            "content_type": "application/pdf",
+                            "template_id": "uploaded",
+                            "template_name": "Uploaded PDF",
+                            "resume_path": f"/resume/{resume_id}/pdf",
+                        }
+                    },
+                )
+
+                # Clear the uploaded PDF from session since it's now associated
+                session.pop("uploaded_pdf_file_id", None)
+                session.pop("uploaded_pdf_filename", None)
+
+                flash("Your uploaded resume has been saved successfully!")
+                return redirect(
+                    url_for("resume_form.preview_resume", resume_id=resume_id)
+                )
+
+            except Exception as e:
+                print(f"Error saving uploaded PDF: {e}")
+                import traceback
+
+                traceback.print_exc()
+                flash("Error saving resume. Please try again.")
+                return redirect(url_for("resume_form.select_template"))
+
+        # User selected a template - validate it
+        template = next((t for t in TEMPLATES if t["id"] == template_id), None)
+        if not template:
+            flash("Invalid template selected.")
+            return redirect(url_for("resume_form.select_template"))
 
         try:
             # Get structured data from MongoDB
@@ -487,10 +594,7 @@ def select_template():
                 return redirect(url_for("resume_form.select_template"))
 
             # Save LaTeX and PDF to GridFS
-            from gridfs import GridFS
-            from app.extensions import mongo
-            from datetime import datetime
-            from bson import ObjectId
+            from datetime import timezone
 
             fs = GridFS(mongo.db)
 
@@ -509,24 +613,26 @@ def select_template():
                 content_type="application/pdf",
             )
 
-            # Update resume document with LaTeX file ID, PDF file ID, and template info
+            # Update resume document with PREVIEW fields
             mongo.db.resumes.update_one(
                 {"_id": ObjectId(resume_id)},
                 {
                     "$set": {
-                        "latex_file_id": latex_file_id,
-                        "pdf_file_id": pdf_file_id,
-                        "template_id": template_id,
-                        "template_name": template["name"],
-                        "latex_generated_at": datetime.utcnow(),
-                        "pdf_generated_at": datetime.utcnow(),
-                        "resume_path": f"/resume/{resume_id}/preview",
+                        "preview_file_id": pdf_file_id,
+                        "preview_latex_file_id": latex_file_id,
+                        "preview_template_id": template_id,
+                        "preview_template_name": template["name"],
+                        "preview_generated_at": datetime.now(timezone.utc),
                     }
                 },
             )
 
-            flash(f"Resume generated successfully! Preview your resume below.")
-            return redirect(url_for("resume_form.preview_resume", resume_id=resume_id))
+            # Clear uploaded PDF from session if user chose a template instead
+            session.pop("uploaded_pdf_file_id", None)
+            session.pop("uploaded_pdf_filename", None)
+
+            flash(f"Resume generated! Please review and save.")
+            return redirect(url_for("resume_form.preview_resume", resume_id=resume_id, mode="preview"))
 
         except Exception as e:
             print(f"Error generating LaTeX: {e}")
@@ -539,8 +645,17 @@ def select_template():
     # GET request - show template selection page
     # Get resume_id from session or query param
     resume_id = session.get("current_resume_id") or request.args.get("resume_id")
+
+    # Check if user has an uploaded PDF they can use
+    has_uploaded_pdf = "uploaded_pdf_file_id" in session
+    uploaded_pdf_filename = session.get("uploaded_pdf_filename", "")
+
     return render_template(
-        "resume_template_selection.html", templates=TEMPLATES, resume_id=resume_id
+        "resume_template_selection.html",
+        templates=TEMPLATES,
+        resume_id=resume_id,
+        has_uploaded_pdf=has_uploaded_pdf,
+        uploaded_pdf_filename=uploaded_pdf_filename,
     )
 
 
@@ -570,6 +685,9 @@ def edit_resume(resume_id):
 
         # Convert structured data back to form format
         prefill_data = convert_structured_to_form_data(structured_data)
+        
+        # Explicitly add title from document to prefill data
+        prefill_data['resume_title'] = resume_doc.get('title', '')
 
         # Store resume_id in session so after editing, they can go back to template selection
         session["current_resume_id"] = resume_id
@@ -611,15 +729,21 @@ def preview_resume(resume_id):
             return redirect(url_for("resume_form.resume_form"))
 
         # Check if PDF exists
-        pdf_file_id = resume_doc.get("pdf_file_id")
-        if not pdf_file_id:
+        file_id = resume_doc.get("file_id")
+        if not file_id:
             flash("PDF not yet generated for this resume.")
             return redirect(url_for("resume_form.resume_form"))
 
         template_name = resume_doc.get("template_name", "Unknown Template")
+        
+        # Check if we are in preview mode
+        mode = request.args.get("mode")
+        if mode == "preview":
+            # In preview mode, we might look for preview_template_name
+            template_name = resume_doc.get("preview_template_name", template_name)
 
         return render_template(
-            "resume_preview.html", resume_id=resume_id, template_name=template_name
+            "resume_preview.html", resume_id=resume_id, template_name=template_name, mode=mode
         )
 
     except Exception as e:
@@ -631,17 +755,17 @@ def preview_resume(resume_id):
         return redirect(url_for("resume_form.resume_form"))
 
 
-@resume_form_bp.route("/resume/<resume_id>/view-pdf", methods=["GET"])
-def view_resume_pdf(resume_id):
-    """View the generated PDF resume in browser/iframe."""
+@resume_form_bp.route("/resume/<resume_id>/save", methods=["POST"])
+def save_resume_selection(resume_id):
+    """Confirm and save the previewed resume as the official one."""
     if not current_user.is_authenticated:
-        flash("Please log in to view your resume.")
+        flash("Please log in to save your resume.")
         return redirect(url_for("auth.login"))
-
+        
     from bson import ObjectId
-    from gridfs import GridFS
     from app.extensions import mongo
-
+    from datetime import datetime, timezone
+    
     try:
         # Get resume document
         resume_doc = mongo.db.resumes.find_one({"_id": ObjectId(resume_id)})
@@ -649,35 +773,60 @@ def view_resume_pdf(resume_id):
             flash("Resume not found.")
             return redirect(url_for("resume_form.resume_form"))
 
-        # Check if user owns this resume
+        # Check permission
         if str(resume_doc.get("user_id")) != str(current_user.id):
-            flash("You do not have permission to view this resume.")
+            flash("You do not have permission to modify this resume.")
             return redirect(url_for("resume_form.resume_form"))
-
-        # Get PDF from GridFS
-        pdf_file_id = resume_doc.get("pdf_file_id")
-        if not pdf_file_id:
-            flash("PDF not yet generated for this resume.")
-            return redirect(url_for("resume_form.resume_form"))
-
-        fs = GridFS(mongo.db)
-        pdf_file = fs.get(pdf_file_id)
-
-        # Serve PDF for viewing (not download)
-        return send_file(
-            io.BytesIO(pdf_file.read()), mimetype="application/pdf", as_attachment=False
+            
+        # Check if we have preview fields
+        preview_file_id = resume_doc.get("preview_file_id")
+        if not preview_file_id:
+            flash("No preview found to save. Please select a template again.")
+            return redirect(url_for("resume_form.select_template"))
+            
+        # Promote preview fields to official fields
+        update_data = {
+            "file_id": preview_file_id,
+            "template_id": resume_doc.get("preview_template_id", "uploaded"),
+            "template_name": resume_doc.get("preview_template_name", "Unknown"),
+            "pdf_generated_at": resume_doc.get("preview_generated_at", datetime.now(timezone.utc)),
+            "resume_path": f"/resume/{resume_id}/pdf",
+        }
+        
+        # Optional: update latex_file_id if it exists
+        if resume_doc.get("preview_latex_file_id"):
+            update_data["latex_file_id"] = resume_doc.get("preview_latex_file_id")
+            update_data["latex_generated_at"] = resume_doc.get("preview_generated_at")
+            
+        # Clear preview fields
+        unset_data = {
+            "preview_file_id": "",
+            "preview_latex_file_id": "",
+            "preview_template_id": "",
+            "preview_template_name": "",
+            "preview_generated_at": ""
+        }
+        
+        mongo.db.resumes.update_one(
+            {"_id": ObjectId(resume_id)},
+            {
+                "$set": update_data,
+                "$unset": unset_data
+            }
         )
-
+        
+        flash("Resume saved successfully!")
+        return redirect(url_for("resume_form.preview_resume", resume_id=resume_id))
+        
     except Exception as e:
-        print(f"Error loading PDF: {e}")
+        print(f"Error saving resume selection: {e}")
         import traceback
-
         traceback.print_exc()
-        flash("Error loading PDF.")
-        return redirect(url_for("resume_form.resume_form"))
+        flash("Error saving resume.")
+        return redirect(url_for("resume_form.preview_resume", resume_id=resume_id, mode="preview"))
 
 
-@resume_form_bp.route("/resume/<resume_id>/pdf", methods=["GET"])
+@resume_form_bp.route("/resume/<resume_id>/pdf/download", methods=["GET"])
 def download_resume_pdf(resume_id):
     """Download the generated PDF resume."""
     if not current_user.is_authenticated:
@@ -701,13 +850,13 @@ def download_resume_pdf(resume_id):
             return redirect(url_for("resume_form.resume_form"))
 
         # Get PDF from GridFS
-        pdf_file_id = resume_doc.get("pdf_file_id")
-        if not pdf_file_id:
+        file_id = resume_doc.get("file_id")
+        if not file_id:
             flash("PDF not yet generated for this resume.")
             return redirect(url_for("resume_form.resume_form"))
 
         fs = GridFS(mongo.db)
-        pdf_file = fs.get(pdf_file_id)
+        pdf_file = fs.get(file_id)
 
         # Get resume title for filename
         resume_title = resume_doc.get("title", "resume")

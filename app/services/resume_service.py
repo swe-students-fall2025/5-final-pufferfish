@@ -1,10 +1,17 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId, errors as bson_errors
 from gridfs import GridFS
 from app.extensions import mongo
 
 
 class ResumeService:
+    @staticmethod
+    def _validate_db():
+        """Validate that database connection is available."""
+        if not mongo or not hasattr(mongo, "db") or mongo.db is None:
+            raise RuntimeError("Database connection not available")
+        return True
+
     @staticmethod
     def _parse_datetime(value):
         """Parse ISO strings or datetime objects into datetime; returns None on failure."""
@@ -38,6 +45,7 @@ class ResumeService:
 
     @staticmethod
     def get_highlights(document_id, reviewer_id=None):
+        ResumeService._validate_db()
         query = {"document_id": document_id}
         if reviewer_id:
             query["reviewer_id"] = reviewer_id
@@ -47,6 +55,7 @@ class ResumeService:
 
     @staticmethod
     def get_all_reviews(document_id):
+        ResumeService._validate_db()
         # returns a list of all review documents for this resume, sorted by first highlight
         cursor = mongo.db.highlights.find({"document_id": document_id}).sort(
             "first_highlight_created_at", 1
@@ -89,6 +98,7 @@ class ResumeService:
     @staticmethod
     def get_user_resumes(user_id):
         """Get all resumes owned by a user (oldest first, so newest is on the right)"""
+        ResumeService._validate_db()
         cursor = mongo.db.resumes.find({"user_id": user_id}).sort("created_at", 1)
         resumes = []
         for doc in cursor:
@@ -176,7 +186,7 @@ class ResumeService:
             "filename": file_storage.filename,
             "content_type": file_storage.mimetype or "application/pdf",
             "file_id": file_id,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
         }
 
         if user_id:
@@ -202,7 +212,7 @@ class ResumeService:
         return resume_id
 
     @staticmethod
-    def get_resume_pdf(resume_id):
+    def get_resume_pdf(resume_id, is_preview=False):
         """Fetch metadata and PDF stream by resumeId."""
         try:
             object_id = ObjectId(resume_id)
@@ -214,7 +224,17 @@ class ResumeService:
             return None, None
 
         fs = GridFS(mongo.db)
-        file_obj = fs.get(doc["file_id"])
+
+        # Determine which file ID to use
+        if is_preview:
+            file_id = doc.get("preview_file_id")
+        else:
+            file_id = doc.get("file_id")
+
+        if not file_id or not fs.exists(file_id):
+            return doc, None
+
+        file_obj = fs.get(file_id)
         return doc, file_obj
 
     @staticmethod
@@ -231,7 +251,7 @@ class ResumeService:
         """
         doc = {
             "structured_data": structured_data,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
         }
 
         if user_id:

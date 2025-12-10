@@ -1,38 +1,33 @@
-{% extends "layout.html" %}
-
-{% block title %}Resume Preview - Puffer Fish{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_preview.css') }}">
-{% endblock %}
-
-{% block content %}
+{% extends "layout.html" %} {% block title %}Resume Preview - Puffer Fish{%
+endblock %} {% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_preview.css') }}" />
+{% endblock %} {% block content %}
 <div class="preview-container">
   <h1 class="page-title">Resume Preview</h1>
-  <p class="page-description">Review your generated resume. Hover over the preview to view it in full size.</p>
-  
-  
-  
+  <p class="page-description">
+    Review your generated resume. Hover over the preview to view it in full
+    size.
+  </p>
+
   <div class="preview-wrapper">
     <div class="preview-card">
       <div class="pdf-preview-area">
-        <object 
-          data="{{ url_for('resume_form.view_resume_pdf', resume_id=resume_id) }}#toolbar=0&navpanes=0&scrollbar=0" 
-          type="application/pdf"
-          class="pdf-preview"
-          title="Resume Preview">
-          <iframe 
-            src="{{ url_for('resume_form.view_resume_pdf', resume_id=resume_id) }}#toolbar=0&navpanes=0&scrollbar=0" 
-            type="application/pdf"
-            class="pdf-preview"
-            title="Resume Preview">
-            <p>Your browser does not support PDFs. 
-              <a href="{{ url_for('resume_form.download_resume_pdf', resume_id=resume_id) }}">Download the PDF</a> instead.
+        <object
+          data="{{ url_for('resume.get_resume_pdf_file', resume_id=resume_id, mode=mode) }}#toolbar=0&navpanes=0&scrollbar=0"
+          type="application/pdf" class="pdf-preview" title="Resume Preview">
+          <iframe
+            src="{{ url_for('resume.get_resume_pdf_file', resume_id=resume_id, mode=mode) }}#toolbar=0&navpanes=0&scrollbar=0"
+            type="application/pdf" class="pdf-preview" title="Resume Preview">
+            <p>
+              Your browser does not support PDFs.
+              <a href="{{ url_for('resume_form.download_resume_pdf', resume_id=resume_id) }}">Download the PDF</a>
+              instead.
             </p>
           </iframe>
         </object>
         <div class="preview-overlay">
-          <a href="{{ url_for('resume_form.view_resume_pdf', resume_id=resume_id) }}" target="_blank" class="preview-link">
+          <a href="{{ url_for('resume.get_resume_pdf_file', resume_id=resume_id, mode=mode) }}" target="_blank"
+            class="preview-link">
             View Full Size
           </a>
         </div>
@@ -40,23 +35,35 @@
     </div>
   </div>
   <div class="go-back-button-container">
-    <a href="{{ url_for('resume_form.select_template', resume_id=resume_id) }}" class="btn-go-back">
-      ← Go Back to Templates
+    {% if mode == 'preview' %}
+    <form action="{{ url_for('resume_form.save_resume_selection', resume_id=resume_id) }}" method="POST"
+      style="display: inline-block">
+      <button type="submit" class="primary">Save This Resume</button>
+    </form>
+    <a href="{{ url_for('resume_form.select_template', resume_id=resume_id) }}" class="secondary outline" role="button"
+      style="margin-left: 1rem">
+      Cancel / Change Template
     </a>
+    {% else %}
+    <a href="{{ url_for('resume_form.select_template', resume_id=resume_id) }}" class="btn-go-back">
+      ← Back to Templates
+    </a>
+    {% endif %}
   </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script>
   // Add hover effect to preview card
-  document.querySelector('.preview-card').addEventListener('mouseenter', function() {
-    this.classList.add('hovered');
-  });
-  
-  document.querySelector('.preview-card').addEventListener('mouseleave', function() {
-    this.classList.remove('hovered');
-  });
+  document
+    .querySelector(".preview-card")
+    .addEventListener("mouseenter", function () {
+      this.classList.add("hovered");
+    });
+
+  document
+    .querySelector(".preview-card")
+    .addEventListener("mouseleave", function () {
+      this.classList.remove("hovered");
+    });
 </script>
 {% endblock %}
-

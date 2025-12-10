@@ -1,21 +1,96 @@
-{% extends "layout.html" %}
-
-{% block title %}Choose Resume Template - Puffer Fish{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/template_selection.css') }}">
-{% endblock %}
-
-{% block content %}
+{% extends "layout.html" %} {% block title %}Choose Resume Template - Puffer
+Fish{% endblock %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/template_selection.css') }}"
+/>
+<style>
+  .uploaded-pdf-section {
+    background: var(--pico-card-sectioning-background-color);
+    border: 2px solid var(--pico-primary-border);
+    border-radius: var(--pico-border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  .uploaded-pdf-section h2 {
+    color: var(--pico-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+  }
+  .uploaded-pdf-section p {
+    color: var(--pico-muted-color);
+    margin-bottom: 1rem;
+  }
+  .uploaded-pdf-section .filename {
+    font-family: monospace;
+    background: var(--pico-form-element-background-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--pico-border-radius);
+    font-size: 0.9rem;
+  }
+  .uploaded-pdf-section .select-button {
+    background: var(--pico-primary-background);
+    border-color: var(--pico-primary-border);
+  }
+  .uploaded-pdf-section .select-button:hover {
+    background: var(--pico-primary-hover-background);
+    border-color: var(--pico-primary-hover-border);
+  }
+  .section-divider {
+    display: flex;
+    align-items: center;
+    margin: 2rem 0;
+    color: var(--pico-muted-color);
+  }
+  .section-divider::before,
+  .section-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--pico-muted-border-color);
+  }
+  .section-divider span {
+    padding: 0 1rem;
+    font-weight: 500;
+  }
+</style>
+{% endblock %} {% block content %}
 <div class="template-selection-container">
-  <h1 class="page-title">Choose Your Resume Template</h1>
-  <p class="page-description">Select a template to generate your resume. Click on a template to preview it, then click "Select This Template" to proceed.</p>
+  <h1 class="page-title">Choose Your Resume</h1>
+  <p class="page-description">
+    Select your uploaded PDF to use as-is, or choose a template to generate a
+    new resume from your information.
+  </p>
 
   {% if resume_id %}
   <div class="edit-resume-button-container">
-    <a href="{{ url_for('resume_form.edit_resume', resume_id=resume_id) }}" class="btn-edit-resume">
+    <a
+      href="{{ url_for('resume_form.edit_resume', resume_id=resume_id) }}"
+      class="btn-edit-resume"
+    >
       ← Revise Resume Information
     </a>
+  </div>
+  {% endif %} {% if has_uploaded_pdf %}
+  <div class="uploaded-pdf-section">
+    <h2>📄 Use Your Uploaded PDF</h2>
+    <p>
+      You uploaded: <span class="filename">{{ uploaded_pdf_filename }}</span>
+    </p>
+    <p>Keep your original resume formatting and style.</p>
+    <form
+      method="POST"
+      action="{{ url_for('resume_form.select_template') }}"
+      class="template-form"
+    >
+      <input type="hidden" name="template_id" value="uploaded_pdf" />
+      <button type="submit" class="select-button">Use My Uploaded PDF</button>
+    </form>
+  </div>
+
+  <div class="section-divider">
+    <span>OR generate from a template</span>
   </div>
   {% endif %}
 
@@ -23,59 +98,59 @@
     {% for template in templates %}
     <div class="template-card" data-template-id="{{ template.id }}">
       <div class="template-preview">
-        <object 
-          data="{{ url_for('static', filename=template.preview_path) }}#toolbar=0&navpanes=0&scrollbar=0" 
-          type="application/pdf"
-          class="pdf-preview"
-          title="Preview of {{ template.name }} template">
-          <iframe 
-            src="{{ url_for('static', filename=template.preview_path) }}#toolbar=0&navpanes=0&scrollbar=0" 
-            type="application/pdf"
-            class="pdf-preview"
-            title="Preview of {{ template.name }} template">
-          </iframe>
-        </object>
+        <img
+          src="{{ url_for('static', filename=template.preview_image) }}"
+          alt="Preview of {{ template.name }} template"
+          class="preview-image"
+        />
         <div class="preview-overlay">
-          <a href="{{ url_for('static', filename=template.preview_path) }}" target="_blank" class="preview-link">
-            View Full Size
+          <a
+            href="{{ url_for('static', filename=template.preview_path) }}"
+            target="_blank"
+            class="preview-link"
+          >
+            View Full PDF
           </a>
         </div>
       </div>
       <div class="template-info">
         <h3 class="template-name">{{ template.name }}</h3>
         <p class="template-description">{{ template.description }}</p>
-        <form method="POST" action="{{ url_for('resume_form.select_template') }}" class="template-form">
-          <input type="hidden" name="template_id" value="{{ template.id }}">
-          <button type="submit" class="select-button">Select This Template</button>
+        <form
+          method="POST"
+          action="{{ url_for('resume_form.select_template') }}"
+          class="template-form"
+        >
+          <input type="hidden" name="template_id" value="{{ template.id }}" />
+          <button type="submit" class="select-button">
+            Select This Template
+          </button>
         </form>
       </div>
     </div>
     {% endfor %}
   </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script>
   // Add hover effect to template cards
-  document.querySelectorAll('.template-card').forEach(card => {
-    card.addEventListener('mouseenter', function() {
-      this.classList.add('hovered');
+  document.querySelectorAll(".template-card").forEach((card) => {
+    card.addEventListener("mouseenter", function () {
+      this.classList.add("hovered");
     });
-    
-    card.addEventListener('mouseleave', function() {
-      this.classList.remove('hovered');
+
+    card.addEventListener("mouseleave", function () {
+      this.classList.remove("hovered");
     });
   });
 
   // Handle template selection
-  document.querySelectorAll('.template-form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-      const button = this.querySelector('.select-button');
-      button.textContent = 'Processing...';
+  document.querySelectorAll(".template-form").forEach((form) => {
+    form.addEventListener("submit", function (e) {
+      const button = this.querySelector(".select-button");
+      button.textContent = "Processing...";
       button.disabled = true;
     });
   });
 </script>
 {% endblock %}
-

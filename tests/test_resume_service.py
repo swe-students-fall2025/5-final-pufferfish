@@ -62,6 +62,7 @@ class TestGetUserResumes:
             resumes = ResumeService.get_user_resumes(user_id)
 
             assert len(resumes) == 2
+            # Oldest first (ascending order for horizontal timeline: oldest on left)
             assert resumes[0]["_id"] == "resume_1"
             assert resumes[0]["title"] == "Software Engineer Resume"
             assert resumes[1]["_id"] == "resume_2"
