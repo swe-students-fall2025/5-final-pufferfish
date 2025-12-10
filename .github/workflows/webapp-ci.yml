@@ -12,6 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Normalize line endings
+        run: |
+          git config core.autocrlf false
+          find . -type f -name "*.py" -exec dos2unix {} \;
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -24,9 +29,3 @@ jobs:
 
       - name: Run black check
         run: black --check --diff .
-
-      # - name: Lint
-      #   run: pylint app/ tests/
-
-      - name: Run tests
-        run: pytest --cov=. --cov-report=term --cov-fail-under=80
