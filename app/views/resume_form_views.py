@@ -363,8 +363,12 @@ def resume_form():
                     or "Untitled Resume"
                 )
 
+            current_resume_id = session.get("current_resume_id")
             resume_id = ResumeService.save_resume_structured_data(
-                structured_data=structured_data, user_id=user_id, title=resume_title
+                structured_data=structured_data,
+                user_id=user_id,
+                title=resume_title,
+                resume_id=current_resume_id,
             )
 
             # Store resume_id in session for template selection
