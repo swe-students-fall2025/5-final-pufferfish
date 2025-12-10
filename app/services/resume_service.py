@@ -99,7 +99,7 @@ class ResumeService:
     def get_user_resumes(user_id):
         """Get all resumes owned by a user (oldest first, so newest is on the right)"""
         ResumeService._validate_db()
-        cursor = mongo.db.resumes.find({"user_id": user_id}).sort("created_at", -1)
+        cursor = mongo.db.resumes.find({"user_id": user_id}).sort("created_at", 1)
         resumes = []
         for doc in cursor:
             resume_id = str(doc.get("_id"))
