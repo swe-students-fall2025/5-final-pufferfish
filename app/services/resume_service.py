@@ -214,6 +214,10 @@ class ResumeService:
             return None, None
 
         fs = GridFS(mongo.db)
+        # Check if file exists in GridFS before trying to get it
+        if "file_id" not in doc or not fs.exists(doc["file_id"]):
+             return doc, None
+             
         file_obj = fs.get(doc["file_id"])
         return doc, file_obj
 
