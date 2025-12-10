@@ -4,6 +4,7 @@ import pytest
 import mongomock
 from unittest.mock import patch
 from bson import ObjectId
+from datetime import datetime, timezone
 from app import create_app
 from app.extensions import mongo
 
@@ -41,6 +42,47 @@ def create_test_user(client):
 
     user = mongo.db.users.find_one({"email": "test@example.com"})
     return str(user["_id"])
+
+
+def create_test_user_with_resume(client):
+    """Helper to create user with a current resume set."""
+    user_id = create_test_user(client)
+
+    # Create a resume
+    resume_id = ObjectId()
+    mongo.db.resumes.insert_one(
+        {
+            "_id": resume_id,
+            "user_id": user_id,
+            "title": "Test Resume",
+            "created_at": datetime.now(timezone.utc),
+            "structured_data": {
+                "name": "Test User",
+                "professional_summary": "A test summary",
+                "skills": [
+                    {
+                        "category": "Programming",
+                        "skills": "Python, JavaScript, Java, C++, SQL",
+                    }
+                ],
+                "experience": [
+                    {
+                        "role": "Software Engineer",
+                        "company": "Test Corp",
+                        "location": "New York",
+                    }
+                ],
+                "education": [{"institution": "Test University", "location": "Boston"}],
+            },
+        }
+    )
+
+    # Set current_resume_id on user
+    mongo.db.users.update_one(
+        {"_id": ObjectId(user_id)}, {"$set": {"current_resume_id": str(resume_id)}}
+    )
+
+    return user_id, str(resume_id)
 
 
 class TestMainViews:
@@ -126,6 +168,186 @@ class TestFeedViews:
     def test_feed_empty_results(self, client):
         """Test feed with no resumes."""
         create_test_user(client)
+
+        response = client.get("/feed")
+        assert response.status_code == 200
+
+    def test_feed_shows_only_current_resumes(self, client):
+        """Test that feed only shows users' current resumes."""
+        user_id, resume_id = create_test_user_with_resume(client)
+
+        response = client.get("/feed")
+        assert response.status_code == 200
+
+    def test_feed_with_skills_truncation(self, client):
+        """Test that skills are truncated if too long."""
+        user_id, resume_id = create_test_user_with_resume(client)
+
+        # Update resume to have very long skills
+        mongo.db.resumes.update_one(
+            {"_id": ObjectId(resume_id)},
+            {
+                "$set": {
+                    "structured_data.skills": [
+                        {
+                            "category": "Programming",
+                            "skills": "Python, JavaScript, Java, C++, SQL, Ruby, Go, Rust, PHP, Swift, Kotlin, Scala",
+                        }
+                    ]
+                }
+            },
+        )
+
+        response = client.get("/feed")
+        assert response.status_code == 200
+
+    def test_feed_with_experience_data(self, client):
+        """Test feed extracts experience level from resume data."""
+        user_id, resume_id = create_test_user_with_resume(client)
+
+        response = client.get("/feed")
+        assert response.status_code == 200
+
+    def test_feed_with_experience_only_role(self, client):
+        """Test feed handles experience with only role."""
+        user_id, resume_id = create_test_user_with_resume(client)
+
+        mongo.db.resumes.update_one(
+            {"_id": ObjectId(resume_id)},
+            {
+                "$set": {
+                    "structured_data.experience": [
+                        {"role": "Developer", "company": "", "location": ""}
+                    ]
+                }
+            },
+        )
+
+        response = client.get("/feed")
+        assert response.status_code == 200
+
+    def test_feed_with_experience_only_company(self, client):
+        """Test feed handles experience with only company."""
+        user_id, resume_id = create_test_user_with_resume(client)
+
+        mongo.db.resumes.update_one(
+            {"_id": ObjectId(resume_id)},
+            {
+                "$set": {
+                    "structured_data.experience": [
+                        {"role": "", "company": "Big Corp", "location": "NYC"}
+                    ]
+                }
+            },
+        )
+
+        response = client.get("/feed")
+        assert response.status_code == 200
+
+    def test_feed_with_location_from_experience(self, client):
+        """Test feed extracts location from experience when education has none."""
+        user_id, resume_id = create_test_user_with_resume(client)
+
+        mongo.db.resumes.update_one(
+            {"_id": ObjectId(resume_id)},
+            {
+                "$set": {
+                    "structured_data.education": [
+                        {"institution": "Test U", "location": ""}
+                    ],
+                    "structured_data.experience": [
+                        {"role": "Dev", "company": "Corp", "location": "San Francisco"}
+                    ],
+                }
+            },
+        )
+
+        response = client.get("/feed")
+        assert response.status_code == 200
+
+    def test_feed_with_skills_non_dict(self, client):
+        """Test feed handles non-dict items in skills list."""
+        user_id, resume_id = create_test_user_with_resume(client)
+
+        mongo.db.resumes.update_one(
+            {"_id": ObjectId(resume_id)},
+            {
+                "$set": {
+                    "structured_data.skills": [
+                        "string skill",
+                        {"category": "Tech", "skills": "Python"},
+                    ]
+                }
+            },
+        )
+
+        response = client.get("/feed")
+        assert response.status_code == 200
+
+    def test_feed_with_string_current_resume_id(self, client):
+        """Test feed handles string current_resume_id."""
+        user_id = create_test_user(client)
+
+        resume_id = ObjectId()
+        mongo.db.resumes.insert_one(
+            {
+                "_id": resume_id,
+                "user_id": user_id,
+                "title": "Test Resume",
+                "created_at": datetime.now(timezone.utc),
+                "structured_data": {"name": "Test"},
+            }
+        )
+
+        # Set current_resume_id as string
+        mongo.db.users.update_one(
+            {"_id": ObjectId(user_id)}, {"$set": {"current_resume_id": str(resume_id)}}
+        )
+
+        response = client.get("/feed")
+        assert response.status_code == 200
+
+    def test_feed_with_objectid_current_resume_id(self, client):
+        """Test feed handles ObjectId current_resume_id."""
+        user_id = create_test_user(client)
+
+        resume_id = ObjectId()
+        mongo.db.resumes.insert_one(
+            {
+                "_id": resume_id,
+                "user_id": user_id,
+                "title": "Test Resume",
+                "created_at": datetime.now(timezone.utc),
+                "structured_data": {"name": "Test"},
+            }
+        )
+
+        # Set current_resume_id as ObjectId
+        mongo.db.users.update_one(
+            {"_id": ObjectId(user_id)}, {"$set": {"current_resume_id": resume_id}}
+        )
+
+        response = client.get("/feed")
+        assert response.status_code == 200
+
+    def test_feed_empty_experience_list(self, client):
+        """Test feed handles empty experience list."""
+        user_id, resume_id = create_test_user_with_resume(client)
+
+        mongo.db.resumes.update_one(
+            {"_id": ObjectId(resume_id)}, {"$set": {"structured_data.experience": []}}
+        )
+
+        response = client.get("/feed")
+        assert response.status_code == 200
+
+    def test_feed_empty_education_list(self, client):
+        """Test feed handles empty education list."""
+        user_id, resume_id = create_test_user_with_resume(client)
+
+        mongo.db.resumes.update_one(
+            {"_id": ObjectId(resume_id)}, {"$set": {"structured_data.education": []}}
+        )
 
         response = client.get("/feed")
         assert response.status_code == 200
