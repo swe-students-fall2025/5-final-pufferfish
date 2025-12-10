@@ -3,9 +3,12 @@ Flask application init
 """
 
 from flask import Flask
+from pymongo.errors import OperationFailure
 from app.config import Config
 from app.extensions import mongo, login_manager, bcrypt
 from app.services.user_service import UserService
+
+
 
 # Blueprints - import all blueprints
 from app.views.auth_views import auth_bp
