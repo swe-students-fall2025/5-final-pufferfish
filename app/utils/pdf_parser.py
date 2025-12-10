@@ -62,6 +62,18 @@ def extract_contact_info(text: str, data: Dict[str, Any]):
     if email_match:
         data['email'] = email_match.group(0)
 
+    # LinkedIn
+    linkedin_match = re.search(r'(linkedin\.com/in/[a-zA-Z0-9_-]+)', text, re.IGNORECASE)
+    if linkedin_match:
+        data['linkedin'] = linkedin_match.group(0)
+
+    # GitHub or Website
+    github_match = re.search(r'(github\.com/[a-zA-Z0-9_-]+)', text, re.IGNORECASE)
+    if github_match:
+        data['website'] = github_match.group(0)
+    else:
+        pass
+
     # Phone
     phone_pattern = r'(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}'
     phone_match = re.search(phone_pattern, text)
@@ -144,13 +156,20 @@ def parse_education(text: str) -> List[Dict[str, Any]]:
                 school_line = buffer[0]
                 # Heuristic: split by last comma for location? "University Name, City, ST"
                 if ',' in school_line:
-                    parts = school_line.rsplit(',', 2) # Try to split last part
-                    # If the part after comma is short (state code), might be location
-                    # "Georgetown, TX"
+                    parts = school_line.rsplit(',', 2)
                     if len(parts) >= 2:
-                        # Crude heuristic: if it looks like "City, ST"
-                        current_entry['school'] = school_line.rsplit(',', 2)[0].strip()
-                        current_entry['location'] = school_line[len(current_entry['school']):].strip(', ')
+                        location_part = school_line[len(parts[0]):].strip(', ')
+                        school_part = parts[0].strip()
+                        
+                        split_match = re.search(r'(.*? (?:University|College|Institute|School|Academy))\s+([A-Z][a-zA-Z\s]+)$', school_part)
+                        if split_match:
+                            real_school = split_match.group(1).strip()
+                            city = split_match.group(2).strip()
+                            current_entry['school'] = real_school
+                            current_entry['location'] = f"{city}, {location_part}"
+                        else:
+                            current_entry['school'] = school_part
+                            current_entry['location'] = location_part
                     else:
                         current_entry['school'] = school_line
                 else:
@@ -161,13 +180,11 @@ def parse_education(text: str) -> List[Dict[str, Any]]:
                 else:
                     pre_date = line[:date_match.start()].strip()
                     full_degree = pre_date
-                
-                # Split Degree and Field
-                # "Bachelor of Arts in Computer Science" -> Degree: Bachelor of Arts, Field: Computer Science
+
                 if ' in ' in full_degree:
                     d, f = full_degree.split(' in ', 1)
                     current_entry['degree'] = d.strip()
-                    current_entry['field'] = f.split(',')[0].strip() # remove minors if comma separated
+                    current_entry['field'] = f.split(',')[0].strip()
                 else:
                     current_entry['degree'] = full_degree
             
@@ -224,15 +241,18 @@ def parse_experience(text: str) -> List[Dict[str, Any]]:
             if line.startswith('•') or line.startswith('-') or line.startswith('*'):
                 current_entry['bullets'].append(line.lstrip('•-* ').strip())
             elif 'company' not in current_entry and 'location' not in current_entry:
-                 # "Company Name Location"
-                 # Heuristic: split by last comma or if it looks like a locations
                  if ',' in line:
                      parts = line.rsplit(',', 1) # City, ST
                      possible_loc = parts[1].strip()
-                     # If possible_loc is short (e.g. TX)
                      if len(possible_loc) < 5: 
                          current_entry['company'] = parts[0].strip()
                          current_entry['location'] = line[len(current_entry['company']):].strip(', ')
+                         
+                         school_match = re.search(r'(.*? (?:University|College|Institute|School|Academy))\s+([A-Z][a-zA-Z\s]+)$', current_entry['company'])
+                         if school_match:
+                             current_entry['company'] = school_match.group(1).strip()
+                             city = school_match.group(2).strip()
+                             current_entry['location'] = f"{city}, {current_entry['location']}"
                      else:
                         current_entry['company'] = line
                  else:
@@ -264,25 +284,39 @@ def parse_projects(text: str) -> List[Dict[str, Any]]:
             
             current_entry = {'bullets': []}
             
-            # "Gitlytics | Python, Flask..."  Date
-            # The part before date is the Name + Tech Stack (Title)
             pre_date = line[:date_match.start()].strip()
             if '|' in pre_date:
                 parts = pre_date.split('|', 1)
                 current_entry['name'] = parts[0].strip()
-                current_entry['title'] = parts[1].strip() # Tech stack as title
+                candidate_title = parts[1].strip()
+                
+                tech_keywords = ['python', 'java', 'c++', 'react', 'sql', 'docker', 'flask', 'node', 'aws', 'git', 'html', 'css', 'javascript', 'typescript']
+                is_tech = False
+                if ',' in candidate_title:
+                    is_tech = True
+                else:
+                    lower_title = candidate_title.lower()
+                    if any(k in lower_title for k in tech_keywords):
+                        is_tech = True
+                
+                if is_tech:
+                    current_entry['skills'] = candidate_title
+                    current_entry['title'] = current_entry['name'] 
+                else:
+                    current_entry['title'] = current_entry['name']
+                    if candidate_title:
+                         current_entry['skills'] = candidate_title
             else:
-                current_entry['name'] = pre_date
-                current_entry['title'] = 'Project' # Default
-            
+                current_entry['title'] = pre_date
+
         elif current_entry is not None:
              if line.startswith('•') or line.startswith('-') or line.startswith('*'):
                  current_entry['bullets'].append(line.lstrip('•-* ').strip())
-             elif not current_entry.get('name'):
-                 # If we haven't found a name yet (maybe date was on next line?)
-                 # But our heuristic assumes date line is key. 
-                 # If no date found yet, maybe this line is the name?
-                 pass
+             else:
+                 if 'skills' not in current_entry and (',' in line or any(k in line.lower() for k in ['java', 'python', 'c++', 'react'])):
+                      current_entry['skills'] = line.strip()
+                 else:
+                      current_entry['bullets'].append(line.strip())
                  
     if current_entry:
         entries.append(current_entry)
@@ -298,7 +332,6 @@ def parse_skills(text: str) -> List[Dict[str, Any]]:
             cat, skills = line.split(':', 1)
             entries.append({'category': cat.strip(), 'skills': skills.strip()})
         else:
-            # Treat whole line as skills with generic category?
             entries.append({'category': 'General', 'skills': line})
             
     return entries
