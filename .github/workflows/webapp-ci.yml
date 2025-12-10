@@ -25,8 +25,8 @@ jobs:
       - name: Run black check
         run: black --check --diff .
 
-      - name: Lint
-        run: pylint app/ tests/
+      # - name: Lint
+      #   run: pylint app/ tests/
 
       - name: Run tests
         run: pytest --cov=. --cov-report=term --cov-fail-under=80

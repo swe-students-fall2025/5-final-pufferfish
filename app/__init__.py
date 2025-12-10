@@ -41,8 +41,6 @@ def create_app(config_class=Config):
         flash("An internal server error occurred. Please try again later.")
         return redirect(url_for("main.index"))
 
-    
-
     # Register all blueprints once
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
