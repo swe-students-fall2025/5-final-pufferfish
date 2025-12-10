@@ -3,9 +3,10 @@
 [![CI](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/webapp-ci.yml/badge.svg)](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/webapp-ci.yml)
 [![CD](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/docker-cicd.yml/badge.svg)](https://github.com/swe-students-fall2025/5-final-pufferfish/actions/workflows/docker-cicd.yml)
 
-**Live Deployment:** https://pufferfish-24bfc.ondigitalocean.app/
+[**Live Deployment**](https://pufferfish-24bfc.ondigitalocean.app/)
+   
 
-**Docker Hub:** https://hub.docker.com/r/xl4624/pufferfish
+[**Docker Hub**](https://hub.docker.com/r/xl4624/pufferfish)
 
 ## Introduction
 
@@ -80,7 +81,9 @@ We have created comprehensive wireframes and design mockups in Figma to guide th
    - `MONGO_ROOT_USER` - MongoDB root username (default: `root`)
    - `MONGO_ROOT_PASSWORD` - MongoDB root password (set a secure password)
    - `MONGO_DB_NAME` - MongoDB database name (default: `pufferfishUserDB`)
-   - `MONGO_URI` - Full MongoDB connection string
+   - `MONGO_URI` - Full MongoDB connection 
+  
+   For development, it may be helpful to use `debug=true` to enable debug mode.
 
    For local development with Docker, use:
 
@@ -90,19 +93,12 @@ We have created comprehensive wireframes and design mockups in Figma to guide th
 
    Our deployed MongoDB Atlas database is set up on Digital Ocean.
 
-6. Run the Flask application:
 
-   ```bash
-   python run.py
-   ```
-
-   The application will be available at `http://localhost:8000`
-
-### Docker Setup
+### Run with Docker Compose
 
 To run the application using Docker Compose:
 
-1. **Configure environment variables:**
+1. **Ensure that you have the necessary environment variables configured:**
 
    ```bash
    cp env.example .env
