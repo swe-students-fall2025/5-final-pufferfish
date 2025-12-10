@@ -410,6 +410,9 @@ def resume_form():
             return redirect(url_for("resume_form.resume_form"))
 
     # GET request - show the form
+    # Clear any existing resume ID so we start fresh, unless specifically prefilled
+    # (Edit flow renders template directly, so this route is usually for new resumes)
+    session.pop("current_resume_id", None)
     return render_template("resume_form.html")
 
 
