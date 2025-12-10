@@ -37,17 +37,27 @@ def feed_home():
                 if isinstance(skill_obj, dict):
                     all_skills.append(skill_obj.get("skills", ""))
         skills_str = ", ".join(filter(None, all_skills))
+        if len(skills_str) > 50:
+            skills_str = skills_str[:50] + "..."
 
         resumes.append(
             {
                 "_id": str(r.get("_id")),
                 "user_id": r.get("user_id"),
                 "filename": r.get("filename", ""),
-                "title": structured_data.get("name", ""),
+                "title": r.get("title", structured_data.get("name", "Untitled")),
                 "summary": structured_data.get("professional_summary", ""),
                 "skills": skills_str,
-                "experience_level": "",
-                "location": structured_data.get("location", ""),
+                "experience_level": (
+                    f"{structured_data.get('experience', [{}])[0].get('role', '')} at {structured_data.get('experience', [{}])[0].get('company', '')}"
+                    if structured_data.get("experience")
+                    else "N/A"
+                ),
+                "location": (
+                    structured_data.get("education", [{}])[0].get("location")
+                    or structured_data.get("experience", [{}])[0].get("location")
+                    or ""
+                ),
             }
         )
 
