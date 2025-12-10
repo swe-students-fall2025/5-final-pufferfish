@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId, errors as bson_errors
 from gridfs import GridFS
 from app.extensions import mongo
@@ -186,7 +186,7 @@ class ResumeService:
             "filename": file_storage.filename,
             "content_type": file_storage.mimetype or "application/pdf",
             "file_id": file_id,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
         }
 
         if user_id:
@@ -245,7 +245,7 @@ class ResumeService:
         """
         doc = {
             "structured_data": structured_data,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
         }
 
         if user_id:
