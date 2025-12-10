@@ -238,15 +238,16 @@ class ResumeService:
         return doc, file_obj
 
     @staticmethod
-    @staticmethod
-    def save_resume_structured_data(structured_data, user_id=None, title=None, resume_id=None):
+    def save_resume_structured_data(
+        structured_data, user_id=None, title=None, resume_id=None
+    ):
         """Store structured resume data in MongoDB.
 
         Args:
             structured_data: Dictionary containing structured resume data
             user_id: Optional user ID to associate with the resume
             title: Optional title for the resume
-            resume_id: Optional existing resume ID to update
+            resume_id: Optional resume ID to update instead of creating new
 
         Returns:
             str: The resume_id (MongoDB _id as string)
@@ -263,10 +264,7 @@ class ResumeService:
             doc["title"] = title
 
         if resume_id:
-             mongo.db.resumes.update_one(
-                {"_id": ObjectId(resume_id)},
-                {"$set": doc}
-             )
+            mongo.db.resumes.update_one({"_id": ObjectId(resume_id)}, {"$set": doc})
         else:
             result = mongo.db.resumes.insert_one(doc)
             resume_id = str(result.inserted_id)
