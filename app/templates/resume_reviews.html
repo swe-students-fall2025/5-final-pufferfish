@@ -1,22 +1,14 @@
 {% extends "layout.html" %} {% block title %}My Resume Reviews - Pufferfish{%
 endblock %} {% block extra_css %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/resume_reviews.css') }}"
-/>
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/resume_viewer.css') }}"
-/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_reviews.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resume_viewer.css') }}" />
 {% endblock %} {% block main %} {% if error %}
 <div class="container" style="margin-top: 2rem">
   <article style="text-align: center; padding: 2rem">
     <h3>Unable to Load Resume Reviews</h3>
     <p>{{ error }}</p>
     <p>
-      <a href="{{ url_for('resume_form.upload_resume') }}" role="button"
-        >Upload a New Resume</a
-      >
+      <a href="{{ url_for('resume_form.upload_resume') }}" role="button">Upload a New Resume</a>
     </p>
   </article>
 </div>
@@ -39,32 +31,25 @@ endblock %} {% block extra_css %}
     <div class="reviewer-header">
       <small id="version-label">Loading version...</small>
       <h5 id="reviewer-name" style="margin: 0">Loading...</h5>
-      <div
-        style="
+      <div style="margin-bottom: 0.5rem">
+        <a id="edit-resume-btn" href="#" role="button" class="primary" style="width: 100%; padding: 0.25rem;">
+          Edit This Resume
+        </a>
+      </div>
+      <div style="
           display: flex;
           align-items: center;
           justify-content: space-between;
           margin-top: 0.5rem;
-        "
-      >
-        <button
-          id="prev-review-btn"
-          class="secondary outline"
-          style="padding: 0.25rem 0.5rem; font-size: 0.75rem"
-          disabled
-        >
+        ">
+        <button id="prev-review-btn" class="secondary outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem"
+          disabled>
           &lt; Prev Review
         </button>
-        <small id="review-count" style="color: var(--pico-muted-color)"
-          >-/-</small
-        >
-        <button
-          id="next-review-btn"
-          class="secondary outline"
-          style="padding: 0.25rem 0.5rem; font-size: 0.75rem"
-          disabled
-        >
-          Next Review &gt;
+        <small id="review-count" style="color: var(--pico-muted-color)">-/-</small>
+        <button id="next-review-btn" class="secondary outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem"
+          disabled>
+          Next &gt;
         </button>
       </div>
     </div>
@@ -143,11 +128,20 @@ endblock %} {% block extra_css %}
       versionLabel.textContent = "No resume";
       prevBtn.disabled = true;
       nextBtn.disabled = true;
+      const editBtn = document.getElementById("edit-resume-btn");
+      if (editBtn) editBtn.style.display = "none";
       return;
     }
     versionLabel.textContent = `${entry.title || "Resume"} (${currentResumeIndex + 1}/${resumeEntries.length})`;
     prevBtn.disabled = currentResumeIndex === 0;
     nextBtn.disabled = currentResumeIndex === resumeEntries.length - 1;
+
+    // Update edit button
+    const editBtn = document.getElementById("edit-resume-btn");
+    if (editBtn) {
+      editBtn.style.display = "inline-block";
+      editBtn.href = `/resume/${entry._id}/edit`;
+    }
   }
   // added button to navigate thru comments by diff reviewers
   function updateReviewNavigation() {

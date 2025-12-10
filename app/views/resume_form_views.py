@@ -685,6 +685,9 @@ def edit_resume(resume_id):
 
         # Convert structured data back to form format
         prefill_data = convert_structured_to_form_data(structured_data)
+        
+        # Explicitly add title from document to prefill data
+        prefill_data['resume_title'] = resume_doc.get('title', '')
 
         # Store resume_id in session so after editing, they can go back to template selection
         session["current_resume_id"] = resume_id
