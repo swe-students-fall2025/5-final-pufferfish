@@ -11,6 +11,7 @@ from flask import (
 )
 from flask_login import current_user, login_required
 from app.services.resume_service import ResumeService
+from app.services.user_service import UserService
 
 resume_bp = Blueprint("resume", __name__)
 
@@ -26,11 +27,23 @@ def resume_feedback(resume_id):
     if not _file:
         return jsonify({"error": "Resume not found"}), 404
 
+    # Get the resume creator's name
+    resume_creator_name = "Unknown"
+    user_id = doc.get("user_id")
+    if user_id:
+        user = UserService.get_user_by_id(user_id)
+        if user:
+            resume_creator_name = f"{user.first_name} {user.last_name}".strip()
+            if not resume_creator_name:
+                resume_creator_name = user.email or "Unknown"
+
     return render_template(
         "resume_feedback.html",
         document_id=resume_id,
         pdf_url=url_for("resume.get_resume_pdf_file", resume_id=resume_id),
         page_title=f"Resume Feedback - {doc.get('filename', 'Resume')}",
+        resume_creator_name=resume_creator_name,
+        resume_title=doc.get("title") or doc.get("filename", "Resume"),
     )
 
 

@@ -8,7 +8,12 @@
         <div id="viewer"></div>
     </div>
     <aside id="comments-sidebar">
-        <h3>Comments</h3>
+        <div class="creator-header">
+            <small>Reviewing Resume by:</small>
+            <h5 id="creator-name" style="margin: 0">{{ resume_creator_name }}</h5>
+            <small style="color: var(--pico-muted-color);">{{ resume_title }}</small>
+        </div>
+        <h6>Comments</h6>
         <div id="comments-list"></div>
     </aside>
 </div>
