@@ -25,6 +25,9 @@ jobs:
       - name: Run black check
         run: black --check --diff .
 
+      - name: Lint
+        run: pylint app/ tests/
+
       - name: Run tests
         # Disable coverage check for now
         run: pytest --cov=. --cov-report=term --cov-fail-under=80
