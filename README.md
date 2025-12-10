@@ -5,6 +5,8 @@
 
 **Live Deployment:** https://pufferfish-24bfc.ondigitalocean.app/
 
+**Docker Hub:** https://hub.docker.com/r/xl4624/pufferfish
+
 ## Introduction
 
 **Pufferfish** is a collaborative resume review and feedback platform designed to help users improve their resumes through peer feedback and interactive review tools. Pufferfish provides a seamless experience for resume submission, viewing, and collaborative feedback.
@@ -65,10 +67,33 @@ We have created comprehensive wireframes and design mockups in Figma to guide th
    pip install -r requirements.txt
    ```
 
-5. Run the Flask application:
+5. **Configure environment variables:**
+
+   Copy the example environment file and update with your values:
 
    ```bash
-   python app.py
+   cp env.example .env
+   ```
+
+   Edit `.env` and set the following required variables:
+
+   - `MONGO_ROOT_USER` - MongoDB root username (default: `root`)
+   - `MONGO_ROOT_PASSWORD` - MongoDB root password (set a secure password)
+   - `MONGO_DB_NAME` - MongoDB database name (default: `pufferfishUserDB`)
+   - `MONGO_URI` - Full MongoDB connection string
+
+   For local development with Docker, use:
+
+   ```
+   MONGO_URI=mongodb://root:your_password@mongodb:27017/pufferfishUserDB?authSource=admin
+   ```
+
+   Our deployed MongoDB Atlas database is set up on Digital Ocean.
+
+6. Run the Flask application:
+
+   ```bash
+   python run.py
    ```
 
    The application will be available at `http://localhost:8000`
@@ -77,11 +102,21 @@ We have created comprehensive wireframes and design mockups in Figma to guide th
 
 To run the application using Docker Compose:
 
-```bash
-docker-compose up
-```
+1. **Configure environment variables:**
 
-The application will be available at `http://localhost:8000`
+   ```bash
+   cp env.example .env
+   ```
+
+   Edit `.env` and update the MongoDB credentials.
+
+2. **Start the application:**
+
+   ```bash
+   docker-compose up
+   ```
+
+   The application will be available at `http://localhost:8000`
 
 ## Deployment
 

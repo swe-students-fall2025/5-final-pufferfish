@@ -254,6 +254,7 @@ class ResumeService:
         """
         doc = {
             "structured_data": structured_data,
+            # Update created_at to reflect the edit time, effectively bumping it to top of list
             "created_at": datetime.now(timezone.utc),
         }
 
