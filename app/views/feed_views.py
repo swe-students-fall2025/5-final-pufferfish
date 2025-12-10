@@ -23,7 +23,9 @@ def feed_home():
 
     # Get all resumes from MongoDB
     skip = (page - 1) * per_page
-    resumes_cursor = mongo.db.resumes.find(filters).skip(skip).limit(per_page)
+    resumes_cursor = (
+        mongo.db.resumes.find(filters).sort("created_at", -1).skip(skip).limit(per_page)
+    )
 
     resumes = []
     for r in resumes_cursor:
