@@ -220,12 +220,12 @@ class ResumeService:
     @staticmethod
     def save_resume_structured_data(structured_data, user_id=None, title=None):
         """Store structured resume data in MongoDB.
-        
+
         Args:
             structured_data: Dictionary containing structured resume data
             user_id: Optional user ID to associate with the resume
             title: Optional title for the resume
-            
+
         Returns:
             str: The resume_id (MongoDB _id as string)
         """
