@@ -212,7 +212,7 @@ class ResumeService:
         return resume_id
 
     @staticmethod
-    def get_resume_pdf(resume_id):
+    def get_resume_pdf(resume_id, is_preview=False):
         """Fetch metadata and PDF stream by resumeId."""
         try:
             object_id = ObjectId(resume_id)
@@ -225,7 +225,12 @@ class ResumeService:
 
         fs = GridFS(mongo.db)
 
-        file_id = doc.get("file_id")
+        # Determine which file ID to use
+        if is_preview:
+            file_id = doc.get("preview_file_id")
+        else:
+            file_id = doc.get("file_id")
+
         if not file_id or not fs.exists(file_id):
             return doc, None
 
