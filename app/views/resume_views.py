@@ -70,7 +70,9 @@ def save_highlights():
 @resume_bp.route("/resume/<resume_id>/pdf")
 def get_resume_pdf_file(resume_id):
     """Stream the stored PDF from MongoDB for viewing/downloading."""
-    doc, file_obj = ResumeService.get_resume_pdf(resume_id)
+    is_preview = request.args.get("mode") == "preview"
+    doc, file_obj = ResumeService.get_resume_pdf(resume_id, is_preview=is_preview)
+    
     if not file_obj:
         return jsonify({"error": "Resume not found"}), 404
 

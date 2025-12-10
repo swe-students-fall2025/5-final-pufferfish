@@ -23,7 +23,9 @@ def feed_home():
 
     # Get all resumes from MongoDB
     skip = (page - 1) * per_page
-    resumes_cursor = mongo.db.resumes.find(filters).skip(skip).limit(per_page)
+    resumes_cursor = (
+        mongo.db.resumes.find(filters).sort("created_at", -1).skip(skip).limit(per_page)
+    )
 
     resumes = []
     for r in resumes_cursor:
@@ -37,17 +39,46 @@ def feed_home():
                 if isinstance(skill_obj, dict):
                     all_skills.append(skill_obj.get("skills", ""))
         skills_str = ", ".join(filter(None, all_skills))
+        if len(skills_str) > 50:
+            skills_str = skills_str[:50] + "..."
+
+        # Safe extraction for experience level and location
+        experience_level = "N/A"
+        exp_list = structured_data.get("experience", [])
+        if isinstance(exp_list, list) and len(exp_list) > 0:
+            item = exp_list[0]
+            if isinstance(item, dict):
+                role = item.get("role", "")
+                company = item.get("company", "")
+                if role and company:
+                    experience_level = f"{role} at {company}"
+                elif role:
+                    experience_level = role
+                elif company:
+                    experience_level = company
+
+        location = ""
+        edu_list = structured_data.get("education", [])
+        if isinstance(edu_list, list) and len(edu_list) > 0:
+            item = edu_list[0]
+            if isinstance(item, dict):
+                location = item.get("location", "")
+
+        if not location and isinstance(exp_list, list) and len(exp_list) > 0:
+            item = exp_list[0]
+            if isinstance(item, dict):
+                location = item.get("location", "")
 
         resumes.append(
             {
                 "_id": str(r.get("_id")),
                 "user_id": r.get("user_id"),
                 "filename": r.get("filename", ""),
-                "title": structured_data.get("name", ""),
+                "title": r.get("title", structured_data.get("name", "Untitled")),
                 "summary": structured_data.get("professional_summary", ""),
                 "skills": skills_str,
-                "experience_level": "",
-                "location": structured_data.get("location", ""),
+                "experience_level": experience_level,
+                "location": location or "N/A",
             }
         )
 

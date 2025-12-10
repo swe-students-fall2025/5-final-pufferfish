@@ -42,7 +42,7 @@ function updateDetails(index) {
             <p><strong>Skills:</strong> ${resume.skills || 'N/A'}</p>
             <p><strong>Experience:</strong> ${resume.experience_level || 'N/A'}</p>
             <p><strong>Location:</strong> ${resume.location || 'N/A'}</p>
-            <a href="/resume/feedback/${resume._id}" class="view-resume-btn">View Full Resume</a>
+            <a href="/resume/feedback/${resume._id}" class="view-resume-btn">Comment on this Resume</a>
         `;
     }
 }
