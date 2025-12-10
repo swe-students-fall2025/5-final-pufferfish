@@ -11,12 +11,12 @@
   font-weight: bold;
   text-align: center;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: var(--pico-color);
 }
 
 .page-description {
   text-align: center;
-  color: #666;
+  color: var(--pico-muted-color);
   margin-bottom: 2rem;
   font-size: 1.1rem;
   max-width: 800px;
@@ -32,20 +32,21 @@
 .btn-edit-resume {
   display: inline-block;
   padding: 0.75rem 1.5rem;
-  background: #6b7280;
-  color: white;
+  background: var(--pico-secondary-background);
+  color: var(--pico-secondary-inverse);
   text-decoration: none;
-  border-radius: 6px;
+  border-radius: var(--pico-border-radius);
   font-size: 1rem;
   font-weight: 600;
-  transition: background 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease;
+  box-shadow: var(--pico-box-shadow);
 }
 
 .btn-edit-resume:hover {
-  background: #4b5563;
+  background: var(--pico-secondary-hover-background);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .btn-edit-resume:active {
@@ -60,11 +61,13 @@
 }
 
 .template-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: var(--pico-card-background-color);
+  border-radius: var(--pico-border-radius);
+  box-shadow: var(--pico-box-shadow);
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
 }
@@ -78,16 +81,24 @@
   position: relative;
   width: 100%;
   height: 500px;
-  background: #f5f5f5;
+  background: var(--pico-card-sectioning-background-color);
   overflow: hidden;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 1px solid var(--pico-muted-border-color);
 }
 
 .pdf-preview {
   width: 100%;
   height: 100%;
   border: none;
-  background: white;
+  background: var(--pico-background-color);
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: top center;
+  background: var(--pico-background-color);
 }
 
 .preview-overlay {
@@ -114,7 +125,7 @@
   color: white;
   background: rgba(255, 255, 255, 0.2);
   padding: 0.75rem 1.5rem;
-  border-radius: 6px;
+  border-radius: var(--pico-border-radius);
   text-decoration: none;
   font-weight: 600;
   backdrop-filter: blur(10px);
@@ -124,6 +135,7 @@
 
 .preview-link:hover {
   background: rgba(255, 255, 255, 0.3);
+  color: white;
 }
 
 .template-info {
@@ -137,12 +149,12 @@
 .template-name {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #333;
+  color: var(--pico-color);
   margin: 0;
 }
 
 .template-description {
-  color: #666;
+  color: var(--pico-muted-color);
   line-height: 1.6;
   margin: 0;
   flex-grow: 1;
@@ -155,18 +167,20 @@
 .select-button {
   width: 100%;
   padding: 0.875rem 1.5rem;
-  background: #6366f1;
-  color: white;
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--pico-border-radius);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease;
 }
 
 .select-button:hover {
-  background: #4f46e5;
+  background: var(--pico-primary-hover-background);
   transform: translateY(-2px);
 }
 
@@ -175,7 +189,8 @@
 }
 
 .select-button:disabled {
-  background: #9ca3af;
+  background: var(--pico-form-element-disabled-background-color);
+  color: var(--pico-muted-color);
   cursor: not-allowed;
   transform: none;
 }

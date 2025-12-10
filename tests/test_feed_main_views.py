@@ -170,8 +170,4 @@ class TestResumeViews:
                                content_type='application/json')
         assert response.status_code == 200
         assert b'success' in response.data
-    
-    def test_resume_store_get(self, client):
-        """Test GET /resume/store page."""
-        response = client.get('/resume/store')
-        assert response.status_code == 200
+

@@ -8,10 +8,10 @@ class ResumeService:
     @staticmethod
     def _validate_db():
         """Validate that database connection is available."""
-        if not mongo or not hasattr(mongo, 'db') or mongo.db is None:
+        if not mongo or not hasattr(mongo, "db") or mongo.db is None:
             raise RuntimeError("Database connection not available")
         return True
-    
+
     @staticmethod
     def _parse_datetime(value):
         """Parse ISO strings or datetime objects into datetime; returns None on failure."""
@@ -224,22 +224,23 @@ class ResumeService:
             return None, None
 
         fs = GridFS(mongo.db)
-        # Check if file exists in GridFS before trying to get it
-        if "file_id" not in doc or not fs.exists(doc["file_id"]):
-             return doc, None
-             
-        file_obj = fs.get(doc["file_id"])
+
+        file_id = doc.get("file_id")
+        if not file_id or not fs.exists(file_id):
+            return doc, None
+
+        file_obj = fs.get(file_id)
         return doc, file_obj
 
     @staticmethod
     def save_resume_structured_data(structured_data, user_id=None, title=None):
         """Store structured resume data in MongoDB.
-        
+
         Args:
             structured_data: Dictionary containing structured resume data
             user_id: Optional user ID to associate with the resume
             title: Optional title for the resume
-            
+
         Returns:
             str: The resume_id (MongoDB _id as string)
         """
