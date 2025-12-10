@@ -102,7 +102,7 @@ class TestEditResume:
         assert b"Test School" not in response.data 
 
     def test_resume_sort_order(self, client):
-        """Test that get_user_resumes returns newest first."""
+        """Test that get_user_resumes returns oldest first."""
         user_id = create_test_user(client)
         
         # Create older resume
@@ -115,7 +115,8 @@ class TestEditResume:
         
         resumes = ResumeService.get_user_resumes(user_id)
         assert len(resumes) == 2
-        assert resumes[0]["_id"] == r2_id
-        assert resumes[0]["title"] == "Newer Resume"
-        assert resumes[1]["_id"] == r1_id
-        assert resumes[1]["title"] == "Older Resume"
+        # Oldest first (ascending order for horizontal timeline: oldest on left, newest on right)
+        assert resumes[0]["_id"] == r1_id
+        assert resumes[0]["title"] == "Older Resume"
+        assert resumes[1]["_id"] == r2_id
+        assert resumes[1]["title"] == "Newer Resume"
