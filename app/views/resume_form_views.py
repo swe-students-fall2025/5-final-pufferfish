@@ -363,8 +363,12 @@ def resume_form():
                     or "Untitled Resume"
                 )
 
+            current_resume_id = session.get("current_resume_id")
             resume_id = ResumeService.save_resume_structured_data(
-                structured_data=structured_data, user_id=user_id, title=resume_title
+                structured_data=structured_data, 
+                user_id=user_id, 
+                title=resume_title,
+                resume_id=current_resume_id
             )
 
             # Store resume_id in session for template selection
@@ -406,6 +410,9 @@ def resume_form():
             return redirect(url_for("resume_form.resume_form"))
 
     # GET request - show the form
+    # Clear any existing resume ID so we start fresh, unless specifically prefilled
+    # (Edit flow renders template directly, so this route is usually for new resumes)
+    session.pop("current_resume_id", None)
     return render_template("resume_form.html")
 
 
