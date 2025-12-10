@@ -3,6 +3,14 @@ from app.config import Config
 from app.extensions import mongo, login_manager, bcrypt
 from app.services.user_service import UserService
 
+# Blueprints - import all blueprints
+from app.views.auth_views import auth_bp
+from app.views.main_views import main_bp
+from app.views.resume_views import resume_bp
+from app.views.resume_form_views import resume_form_bp
+from app.views.feed_views import feed_bp
+from app.views.resume_reviews_views import resume_reviews_bp
+
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -33,13 +41,7 @@ def create_app(config_class=Config):
         flash("An internal server error occurred. Please try again later.")
         return redirect(url_for("main.index"))
 
-    # Blueprints - import all blueprints
-    from app.views.auth_views import auth_bp
-    from app.views.main_views import main_bp
-    from app.views.resume_views import resume_bp
-    from app.views.resume_form_views import resume_form_bp
-    from app.views.feed_views import feed_bp
-    from app.views.resume_reviews_views import resume_reviews_bp
+    
 
     # Register all blueprints once
     app.register_blueprint(auth_bp)
