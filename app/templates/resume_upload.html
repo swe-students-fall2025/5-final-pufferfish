@@ -1,27 +1,37 @@
-{% extends "layout.html" %}
-
-{% block title %}Upload Resume - Puffer Fish{% endblock %}
-
-{% block content %}
+{% extends "layout.html" %} {% block title %}Upload Resume - Puffer Fish{%
+endblock %} {% block content %}
 <main class="container">
-    <article>
-        <header>
-            <h1>Upload your Resume</h1>
-        </header>
-        <p>Upload your existing resume (PDF) and we will try to fill out the form for you.</p>
+  <article>
+    <header>
+      <h1>Upload your Resume</h1>
+    </header>
+    <p>
+      Upload your existing resume (PDF) and we'll auto-fill the form with your
+      information. After reviewing your details, you can choose to either
+      <strong>keep your uploaded PDF</strong> or
+      <strong>generate a new one from a template</strong>.
+    </p>
 
-        <form method="POST" enctype="multipart/form-data">
-            <label for="resume">
-                Select Resume (PDF)
-                <input type="file" id="resume" name="resume" accept="application/pdf" required>
-            </label>
-            <footer>
-                <button type="submit" role="button">Upload and Auto-fill</button>
-                <div style="text-align: center; margin-top: 1rem;">
-                    <a href="{{ url_for('resume_form.resume_form') }}">Skip and fill manually</a>
-                </div>
-            </footer>
-        </form>
-    </article>
+    <form method="POST" enctype="multipart/form-data">
+      <label for="resume">
+        Select Resume (PDF)
+        <input
+          type="file"
+          id="resume"
+          name="resume"
+          accept="application/pdf"
+          required
+        />
+      </label>
+      <footer>
+        <button type="submit" role="button">Upload and Continue</button>
+        <div style="text-align: center; margin-top: 1rem">
+          <a href="{{ url_for('resume_form.resume_form') }}"
+            >Skip and fill manually</a
+          >
+        </div>
+      </footer>
+    </form>
+  </article>
 </main>
 {% endblock %}

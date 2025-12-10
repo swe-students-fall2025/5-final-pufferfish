@@ -67,27 +67,6 @@ def save_highlights():
     return jsonify({"status": "success"}), 200
 
 
-@resume_bp.route("/resume/store", methods=["GET", "POST"])
-def store_resume():
-    """Simple page to upload a PDF and store it in MongoDB (GridFS)."""
-    resume_id = None
-    if request.method == "POST":
-        file = request.files.get("resume")
-        if not file or file.filename == "":
-            flash("Please select a PDF to upload.")
-        elif not file.filename.lower().endswith(".pdf"):
-            flash("Only PDF files are supported right now.")
-        else:
-            resume_id = ResumeService.save_resume_pdf(
-                file,
-                user_id=str(current_user.id) if current_user.is_authenticated else None,
-            )
-            flash(
-                "Resume stored successfully. Use this ID with /resume/feedback/<resumeId>."
-            )
-    return render_template("resume_store.html", resume_id=resume_id)
-
-
 @resume_bp.route("/resume/<resume_id>/pdf")
 def get_resume_pdf_file(resume_id):
     """Stream the stored PDF from MongoDB for viewing/downloading."""
