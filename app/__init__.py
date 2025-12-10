@@ -1,10 +1,25 @@
+"""
+Flask application init
+"""
 from flask import Flask
 from app.config import Config
 from app.extensions import mongo, login_manager, bcrypt
 from app.services.user_service import UserService
 
+# Blueprints - import all blueprints
+from app.views.auth_views import auth_bp
+from app.views.main_views import main_bp
+from app.views.resume_views import resume_bp
+from app.views.resume_form_views import resume_form_bp
+from app.views.feed_views import feed_bp
+from app.views.resume_reviews_views import resume_reviews_bp
 
 def create_app(config_class=Config):
+    """
+    Create and configure the Flask application.
+
+    :param config_class: Configuration class to use
+    """
     app = Flask(__name__)
     app.config.from_object(config_class)
 
@@ -27,19 +42,12 @@ def create_app(config_class=Config):
     # Error handlers
     @app.errorhandler(500)
     def internal_error(error):
-        app.logger.error(f"Internal Server Error: {str(error)}", exc_info=True)
-        from flask import render_template, flash, redirect, url_for
+        app.logger.error("Internal Server Error: %s", str(error), exc_info=True)
+        from flask import flash, redirect, url_for
 
         flash("An internal server error occurred. Please try again later.")
         return redirect(url_for("main.index"))
 
-    # Blueprints - import all blueprints
-    from app.views.auth_views import auth_bp
-    from app.views.main_views import main_bp
-    from app.views.resume_views import resume_bp
-    from app.views.resume_form_views import resume_form_bp
-    from app.views.feed_views import feed_bp
-    from app.views.resume_reviews_views import resume_reviews_bp
 
     # Register all blueprints once
     app.register_blueprint(auth_bp)
@@ -52,6 +60,6 @@ def create_app(config_class=Config):
     # mongo
     try:
         mongo.db.resumes.create_index([("$**", "text")])
-    except Exception as e:
-        app.logger.warning(f"Could not create text index on 'resumes' collection: {e}")
+    except OperationFailure as e:
+        app.logger.warning("Could not create text index on 'resumes' collection: %s", e)
     return app

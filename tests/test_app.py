@@ -1,7 +1,6 @@
 """Basic tests for the Flask application."""
 
 import pytest
-import mongomock
 from app import create_app
 
 
@@ -12,11 +11,11 @@ def client():
     app.config["TESTING"] = True
     app.config["MONGO_URI"] = "mongomock://localhost"
 
-    with app.test_client() as client:
-        yield client
+    with app.test_client() as c:
+        yield c
 
 
-def test_index_route(client):
+def test_index_route(c):
     """Test the index route."""
-    response = client.get("/")
+    response = c.get("/")
     assert response.status_code == 200
