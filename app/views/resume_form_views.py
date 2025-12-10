@@ -469,7 +469,7 @@ def select_template():
             # Save LaTeX and PDF to GridFS
             from gridfs import GridFS
             from app.extensions import mongo
-            from datetime import datetime
+            from datetime import datetime, timezone
             from bson import ObjectId
             
             fs = GridFS(mongo.db)
@@ -498,8 +498,8 @@ def select_template():
                         "pdf_file_id": pdf_file_id,
                         "template_id": template_id,
                         "template_name": template['name'],
-                        "latex_generated_at": datetime.utcnow(),
-                        "pdf_generated_at": datetime.utcnow(),
+                        "latex_generated_at": datetime.now(timezone.utc),
+                        "pdf_generated_at": datetime.now(timezone.utc),
                         "resume_path": f"/resume/{resume_id}/view-pdf"
                     }
                 }
